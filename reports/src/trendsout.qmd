@@ -1,0 +1,192 @@
+```{r}
+#| label: trendsoutfunc
+#| cache: true
+#| cache.comments: false
+
+hush <- function(code) {
+  sink("NUL") # use /dev/null in UNIX
+  tmp <- code
+  sink()
+  return(tmp)
+}
+
+estfunc_inner2 <- function(model, datain) {
+  std_fit <- stdGlm(model, data = transform(datain, time = 36525), X = "indexyear_fac")
+  std_sum <- summary(std_fit, CI.type = "log")
+  out <- std_sum[["est.table"]] %>%
+    as_tibble(rownames = "indexyear_fac") %>%
+    mutate(
+      indexyear = as.numeric(indexyear_fac),
+      r = paste0(fn(Estimate, 1), " (", fn(`lower 0.95`, 1), "-", fn(`upper 0.95`, 1), ")")
+    )
+
+  apc <- hush(csu_eapc(out,
+    var_rate = "Estimate",
+    var_year = "indexyear",
+    var_eapc = "eapc"
+  ))
+
+  out <- out %>%
+    select(indexyear_fac, r) %>%
+    add_row(
+      indexyear_fac = "eAPC",
+      r = paste0(
+        fn(apc$eapc, 1), " (", fn(apc$eapc_low, 1),
+        " - ", fn(apc$eapc_up, 1), ")"
+      )
+    )
+}
+
+estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
+  data <- data %>%
+    filter(advhf == "Yes") %>%
+    rename(
+      time = !!sym(time),
+      event = !!sym(event)
+    )
+
+  ev <- data %>%
+    group_by(indexyear_fac) %>%
+    summarise(
+      ev = sum(event == "Yes"),
+      s = sum(time / 365.25),
+      n = n(),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      r = ev / s * 100,
+      event = paste0(ev, "/", fn(s, 0))
+    ) %>%
+    select(indexyear_fac, n, event) %>%
+    add_row(
+      indexyear_fac = "eAPC",
+      n = NA_real_,
+      event = ""
+    )
+
+  # crude
+  poisson_fit <- glm(event == "Yes" ~ indexyear_fac,
+    offset = log(time / 365.25 / 100),
+    data = data, family = poisson
+  )
+  crude <- estfunc_inner2(poisson_fit, datain = data)
+
+  # age sex
+  adjvars <- setdiff(c("shf_age", "shf_sex"), novars)
+  poisson_fit <- glm(formula(paste0("event == 'Yes' ~ indexyear_fac +", adjvars)),
+    offset = log(time / 365.25 / 100),
+    data = data, family = poisson
+  )
+  as <- estfunc_inner2(poisson_fit, datain = data)
+
+  outall <- bind_cols(
+    ev,
+    crude %>% select(-indexyear_fac),
+    as %>% select(-indexyear_fac)
+  ) %>%
+    mutate(var = namegroup) %>%
+    select(var, everything())
+}
+
+estfunc <- function(event, time, age = T) {
+  out0 <- estfunc_inner(data = rsdata, event, time, namegroup = "All")
+  out3 <- estfunc_inner(data = rsdata %>% filter(shf_sex == "Female"), event, time, novars = "shf_sex", namegroup = "Female")
+  out4 <- estfunc_inner(data = rsdata %>% filter(shf_sex == "Male"), event, time, novars = "shf_sex", namegroup = "Male")
+
+  if (age) {
+    out1 <- estfunc_inner(data = rsdata %>% filter(shf_age_cat == "<70"), event, time, namegroup = "Age (years) < 70")
+    out2 <- estfunc_inner(data = rsdata %>% filter(shf_age_cat == ">=70"), event, time, namegroup = "Age (years) >= 70")
+
+    outall <- bind_rows(out0, out1, out2, out3, out4)
+    rowspecs <- seq(22, 22 * 4, 22)
+  }
+  if (!age) {
+    outall <- bind_rows(out0, out3, out4)
+    rowspecs <- seq(22, 22 * 2, 22)
+  }
+
+  cl <- c(
+    "Subgroup", "Year", "N", "Events/sum py", "Crude", "Adjusted age, sex"
+  )
+
+  outall <- outall %>%
+    mutate(var = if_else(indexyear_fac == 2003, var, ""))
+
+  if (output) {
+    make_one_xlsxsheet(outall, colnames = cl)
+  }
+
+  default_kable(outall,
+    col.names = cl,
+    longtable = TRUE,
+    font_size = 6.5
+  ) %>%
+    add_header_above(c(" " = 1, " " = 1, " " = 1, " " = 1, "Incidence rate/100 person-years (95 % CI) " = 2)) %>%
+    row_spec(rowspecs, hline_after = T)
+}
+```
+
+```{r}
+#| label: tbl-trendsout-death
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends death"
+#| tbl-pos: "H"
+
+i <- 1
+
+estfunc(event = outvars$var[i], time = outvars$time[i])
+```
+
+```{r}
+#| label: tbl-trendsout-cvdeath
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends CV death"
+#| tbl-pos: "H"
+
+i <- 2
+
+estfunc(event = outvars$var[i], time = outvars$time[i])
+```
+
+```{r}
+#| label: tbl-trendsout-noncvdeath
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends Non-CV death"
+#| tbl-pos: "H"
+
+i <- 3
+
+estfunc(event = outvars$var[i], time = outvars$time[i])
+```
+
+```{r}
+#| label: tbl-trendsout-lvad
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends LVAD"
+#| tbl-pos: "H"
+
+i <- 4
+
+# estfunc(event = outvars$var[i], time = outvars$time[i], age = F)
+```
+
+```{r}
+#| label: tbl-trendsout-htx
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends Htx"
+#| tbl-pos: "H"
+
+i <- 5
+
+estfunc(event = outvars$var[i], time = outvars$time[i], age = F)
+```

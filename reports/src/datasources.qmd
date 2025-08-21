@@ -1,0 +1,44 @@
+```{r}
+#| label: tbl-ds
+#| cache: true
+#| cache.comments: false
+#| tbl-cap: "Overview of data sources"
+#| tbl-pos: "H"
+
+ds <- tibble(
+  reg = c(
+    "Swedish Heart Failure Registry (SwedeHF)",
+    "Register of the Total Population (RTB)",
+    "Longitudinal Integrated database for health insurance and labour market studies (LISA)",
+    "National Patient Register (NPR)",
+    "National Cause of Death Register (NCDR)"
+  ),
+  adm = c("Uppsala Clinical Research Center", "Statistics Sweden", "Statistics Sweden", "Swedish National Board of Health and Welfare", "Swedish National Board of Health and Welfare"),
+  data = c(
+    "Includes in- and out-hospital patients with HF, regardless of EF and previous history of HF. Around 100 variables are recorded at discharge from hospital or at the outpatient visit, i.e. index date. Up to April 2017 the only inclusion criterion was a clinical diagnosis of HF, which was thereafter defined according to the ICD-10 codes I50.0, I50.1, I50.9, I42.0, I42.6, I42.7, I25.5, I11.0, I13.0, I13.2.",
+    "Data on all persons registered in Sweden, including birth date, sex, place of residence (parish, municipality, or county, depending on availability of reference individuals), last immigration and emigration dates, and identity of parents/siblings",
+    "Type of work, compensations from employment, entrepreneurial activities, studies, national military service, illness, parental leave, unemployment, labour market activity, rehabilitation, partial retirement, early retirement, retirement, occupational pension, annuities, social assistance, private pensions, country of birth and parental countries of birth, place of employment, highest level of education. Does not include persons < 15 years.",
+    "Data from outpatient visits and inpatient care in hospital-based care, including date of visit, primary and secondary diagnoses and procedures. Primary care is not included.",
+    "Date and underlying as well as contributing cause of death."
+  ),
+  coverage = c("In 2023, 69 of 76 Swedish hospitals enrolled patients in SwedeHF, which had a 59% coverage of the prevalent HF population in Sweden", "~100", "~100", "~100", "~100"),
+  year = c("2000 (2003 on a national level)-", "1968-", "1990-", "1964- Hospitalizations, 1987- Nationwide coverage, 1997- Outpatient surgery, 2001- Specialized outpatient visits", "1961-"),
+  ref = c("@swedehf @annualreport", "@rtb", "@lisa", "@npr", "@dors")
+)
+
+cn <- c("Register name", "Administrator", "Type of data", "Coverage", "Start year", "Reference")
+
+if (output) {
+  make_one_xlsxsheet(ds,
+    colnames = cn
+  )
+}
+
+default_kable(ds,
+  escape = TRUE,
+  font_size = 8.5,
+  col.names = cn
+) %>%
+  column_spec(c(1, 2, 4, 5, 6), width = "2cm") %>%
+  column_spec(3, width = "5cm")
+```

@@ -1,0 +1,162 @@
+```{r}
+#| label: tbl-vars
+#| cache: true
+#| cache.comments: false
+#| tbl-cap: "Variable definitions and data sources"
+#| tbl-pos: "H"
+
+vars <- bind_rows(
+  tibble(var = setdiff(tabvars, c("sos_com_htx", "sos_com_lvad"))),
+  outvars %>%
+    filter(!composite & !rep) %>%
+    select(var, name),
+) %>%
+  mutate(
+    order = 1:n(),
+    # if recoding or categorizing will still get org label
+    var_tmp = str_replace_all(var, "(_cat2|_cat)", ""),
+    var_tmp = str_replace_all(var_tmp, "shf_sos_com_", "sos_com_")
+  ) %>%
+  group_by(var_tmp) %>%
+  slice(1) %>%
+  ungroup()
+
+vars <- left_join(vars,
+  metavars %>%
+    select(variable, label, unit),
+  by = c("var_tmp" = "variable")
+)
+
+# meta data
+meta <- bind_rows(
+  outcommeta,
+  deathmeta
+)
+vars <- left_join(vars, meta, by = c("var_tmp" = "Variable"))
+
+ihdspec <- str_split(str_trim(meta %>% filter(Variable %in% c("sos_com_pci", "sos_com_cabg", "sos_com_ihd")) %>% pull(Code)), " ", simplify = T)
+ihdspec <- c(ihdspec[, 1], ihdspec[, 2])
+ihdspec <- paste0(
+  paste0("ICD:", str_remove_all(paste0(ihdspec[str_detect(ihdspec, "ICD")], collapse = ","), "ICD:")),
+  " ",
+  paste0("OP:", str_remove_all(paste0(ihdspec[str_detect(ihdspec, "OP")], collapse = ","), "OP:"))
+)
+
+vars <- vars %>%
+  mutate(
+    label = coalesce(name, label),
+    Variable = coalesce(label, var_tmp),
+    # small fixes
+    Variable = str_replace_all(Variable, fixed("Disposable income (100 SEK)"), "Income"), ,
+    Code = case_when(
+      Variable == "Non-CV death" ~ "ICD All exept I, J81, K761, R570, G45",
+      Variable == "Previous HFH <= 6 months" ~ paste0("ICD ", str_replace_all(global_hficd, "\\|", ",")),
+      TRUE ~ Code
+    )
+  )
+
+vars <- vars %>%
+  arrange(order) %>%
+  mutate(
+    order = 1:n(),
+    Code = str_trim(Code),
+    Code = if_else(Variable == "Ischemic heart disease", ihdspec, Code),
+    Code = str_replace_all(Code, "ICD", "ICD-10"),
+    Code = case_when(
+      is.na(Register) ~ Code,
+      Period == "0-" ~ str_replace_all(Code, "ICD-10", "ICD-9/10"),
+      TRUE ~ Code
+    ),
+    Code = str_replace_all(Code, ":", " "),
+    Code = str_replace_all(Code, ",", ", "),
+    Code = str_replace_all(Code, "OP ", "Procedure "),
+    Code = str_replace_all(Code, "Ekod ", "Cause "),
+  )
+
+# data sources and footnotes
+vars <- vars %>%
+  mutate(
+    data1 = if_else(str_detect(var, "^shf_"), "SwedeHF", NA),
+    data2 = case_when(
+      str_detect(var, "sos_com_|sos_prevhfh6mo") & !is.na(Code) ~ paste0("NPR: ", Code),
+      str_detect(var, "sos_com_") ~ "NPR",
+      str_detect(var, "sos_out_") & !str_detect(var, "death") & !is.na(Code) ~ paste0("NPR: ", Code)
+    ),
+    data3 = if_else(str_detect(var, "scb_famtype|scb_education|scb_dispincome"), "LISA", NA),
+    data4 = if_else(str_detect(var, "scb_child"), "RTP", NA),
+    data6 = case_when(
+      str_detect(var, "death") & !is.na(Code) ~ paste0("NCDR: ", Code),
+      str_detect(var, "death") & is.na(Code) ~ "NCDR"
+    ),
+    footnote1 = if_else(str_detect(var, "sos_com") & !Variable %in% c("Charlson Comorbidity Index"), footnote_marker_alphabet(1, format = "latex"), ""),
+    footnote2 = if_else(str_detect(var, "scb_"), footnote_marker_alphabet(2, format = "latex"), ""),
+    footnote3 = if_else(str_detect(var, "sos_out") & !str_detect(var, "death"), footnote_marker_alphabet(3, format = "latex"), ""),
+    footnote4 = if_else(str_detect(var, "death"), footnote_marker_alphabet(4, format = "latex"), ""),
+    footnote5 = if_else(Variable == "Charlson Comorbidity Index", footnote_marker_alphabet(5, format = "latex"), "")
+  ) %>%
+  unite(datasource, starts_with("data"), sep = "; ", na.rm = TRUE) %>%
+  mutate(
+    datasource = case_when(
+      Variable == "eGFR" ~ "SwedeHF CKD-EPI 2021 (see reference)",
+      Variable == "Anemia" ~ "SwedeHF Female Hb < 120 g/L/Male Hb < 130 g/L",
+      TRUE ~ datasource
+    )
+  ) %>%
+  unite(footnote, starts_with("footnote"), sep = "") %>%
+  arrange(order) %>%
+  mutate(datasource = paste0(datasource, footnote)) %>%
+  select(Variable, datasource)
+
+footnotetext <- c(
+  "Derived from diagnoses/operations in all positions, in-patient and out-patient speciality care within 5 years prior to index (ICD-10)/1987 (ICD-9) unless stated otherwise.",
+  "From the year preceeding baseline.",
+  "Derived from operations in all positions, in-patient and out-patient speciality.",
+  "Cause of death is derived from the underlying cause of death.",
+  "Derived from diagnoses in all positions, in-patient and out-patient speciality care within 10 years prior to index using ICD-9/10 according to Ludvigsson, 2021 (see reference)."
+)
+
+vars_xls <- vars %>%
+  mutate(
+    datasource = str_remove_all(datasource, "textsuperscript|\\}|\\{"),
+    datasource = str_replace_all(datasource, "\\\\", " ")
+  ) %>%
+  select(Variable, datasource) %>%
+  add_row(Variable = "") %>%
+  add_row(Variable = paste0("a ", footnotetext[1])) %>%
+  add_row(Variable = paste0("b ", footnotetext[2])) %>%
+  add_row(Variable = paste0("c ", footnotetext[3])) %>%
+  add_row(Variable = paste0("d ", footnotetext[4])) %>%
+  add_row(Variable = paste0("e ", footnotetext[5]))
+
+if (output) {
+  make_one_xlsxsheet(vars_xls,
+    colnames = c("Variable", "Data source")
+  )
+}
+
+
+vars <- vars %>%
+  mutate(
+    # so no probs
+    Variable = sanitize_text(Variable)
+  )
+
+
+default_kable(vars,
+  escape = FALSE,
+  longtable = TRUE,
+  font_size = 9,
+  col.names = c("Variable", "Data source")
+) %>%
+  footnote(
+    footnote_order = c("general", "symbol", "alphabet"),
+    general_title = "",
+    general = c(
+      "Abbreviations: SwedeHF, The Swedish Heart Failure Registry; NPR, The National Patient Register; LISA, Longitudinal integrated database for health insurance and labour market studies; RTP, Register of the Total Population; NCDR, The National Cause of Death Register"
+    ),
+    alphabet = footnotetext,
+    threeparttable = T
+  ) %>%
+  column_spec(1, width = "6cm") %>%
+  column_spec(2, width = "8cm")
+```
