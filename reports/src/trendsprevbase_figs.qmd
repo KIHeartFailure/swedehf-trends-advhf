@@ -3,11 +3,11 @@
 #| cache: true
 #| cache.comments: false
 
-trendbasefunc <- function(data, strata = NULL, addstrataname = NULL, ybreaks = seq(0, 100, 20), addpos = "first") {
+trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, ybreaks = seq(0, 100, 20), addpos = "first") {
   nlevel <- nlevels(data %>% pull(!!sym(strata)))
   prop <- data %>%
     filter(!is.na(!!sym(strata))) %>%
-    group_by(indexyear_fac) %>%
+    group_by(indexyear_fac, .drop = F) %>%
     count(!!sym(strata)) %>%
     mutate(
       tot = sum(n),
@@ -23,6 +23,7 @@ trendbasefunc <- function(data, strata = NULL, addstrataname = NULL, ybreaks = s
       ),
       level = str_remove_all(level, "Yes "),
       level = str_replace_all(level, ">=", "\u2265"),
+      level = str_replace_all(level, "<=", "\u2264"),
       level = fct_inorder(level)
     )
 
@@ -63,26 +64,26 @@ trendbasefunc <- function(data, strata = NULL, addstrataname = NULL, ybreaks = s
 #| cache: true
 #| cache.comments: false
 #| dependson: trendbasefunc
-#| fig-cap: "Temporal trends in baseline characteristics for patients with advanced HF"
+#| fig-cap: "Temporal trends in baseline characteristics"
 #| fig-subcap: !expr c("Age", "Sex", "CCI", "Beta-blocker", "RASi/ARNi", "MRA")
 #| layout-ncol: 2
 #| layout-nrow: 3
 
-trendbasefunc(data = rsdata %>% filter(advhf == "Yes"), strata = "shf_age_cat", addstrataname = "Age (years)")
-trendbasefunc(data = rsdata %>% filter(advhf == "Yes"), strata = "shf_sex")
-trendbasefunc(data = rsdata %>% filter(advhf == "Yes"), strata = "sos_com_charlsonci_cat", addstrataname = "CCI")
-trendbasefunc(data = rsdata %>% filter(advhf == "Yes"), strata = "shf_bbl", addstrataname = "Beta-blocker", addpos = "last")
-trendbasefunc(data = rsdata %>% filter(advhf == "Yes"), strata = "shf_rasiarni", addstrataname = "RASi/ARNi", addpos = "last")
-trendbasefunc(data = rsdata %>% filter(advhf == "Yes"), strata = "shf_mra", addstrataname = "MRA", addpos = "last")
+trendbasefunc(strata = "shf_age_cat", addstrataname = "Age (years)")
+trendbasefunc(strata = "shf_sex")
+trendbasefunc(strata = "sos_com_charlsonci_cat", addstrataname = "CCI")
+trendbasefunc(strata = "shf_bbl", addstrataname = "Beta-blocker", addpos = "last")
+trendbasefunc(strata = "shf_rasiarni", addstrataname = "RASi/ARNi", addpos = "last")
+trendbasefunc(strata = "shf_mra", addstrataname = "MRA", addpos = "last")
 ```
 
 ```{r}
 #| label: fig-baseadvhftreat
 #| cache: true
 #| cache.comments: false
-#| dependson: trendprevfunc
-#| fig-cap: "Temporal trends in baseline characteristics for patients with advanced HF eligible for AdvHF therapies"
-#| fig-subcap: !expr c("Age", "Sex", "CCI", "Beta-blocker", "RASi/ARNi", "MRA")
+#| dependson: trendbasefunc
+#| fig-cap: "Temporal trends in baseline characteristics for patients eligible for AdvHF therapies"
+#| fig-subcap: !expr c("Sex", "CCI", "Beta-blocker", "RASi/ARNi", "MRA")
 #| layout-ncol: 2
 #| layout-nrow: 3
 

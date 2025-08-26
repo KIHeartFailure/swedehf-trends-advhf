@@ -5,36 +5,43 @@ rsdata <- cut_surv(rsdata, sos_out_deathnoncv, sos_outtime_death, global_fu, cut
 
 rsdata <- rsdata %>%
   mutate(
+    shf_nyha = droplevels(shf_nyha),
+    sos_com_charlsonci_cat = fct_recode(sos_com_charlsonci_cat, "1" = "0-1"),
+    # sos_com_lvad = if_else(shf_indexyear >= 2015, sos_com_lvad, NA_character_),
     all = factor(1),
     indexyear_fac = factor(shf_indexyear),
-    sos_prevhfh6mo = factor(if_else(sos_timeprevhosphf <= 365 / 2 & !is.na(sos_timeprevhosphf) | sos_location == "HF in-patient", 1, 0), levels = 0:1, labels = c("No", "Yes")),
-    advhf = ynfac(
-      if_else(shf_ef == "<30" &
-        shf_nyha %in% c("III", "IV") &
-        sos_prevhfh6mo == "Yes" &
-        sos_com_htx == "No" &
-        sos_com_lvad == "No", 1, 0)),
+    indexyear_cat_fac = factor(case_when(
+      shf_indexyear <= 2004 ~ "2003-2004",
+      shf_indexyear <= 2006 ~ "2005-2006",
+      shf_indexyear <= 2008 ~ "2007-2008",
+      shf_indexyear <= 2010 ~ "2009-2010",
+      shf_indexyear <= 2012 ~ "2011-2012",
+      shf_indexyear <= 2014 ~ "2013-2014",
+      shf_indexyear <= 2016 ~ "2015-2016",
+      shf_indexyear <= 2018 ~ "2017-2018",
+      shf_indexyear <= 2020 ~ "2019-2020",
+      shf_indexyear <= 2022 ~ "2021-2022"
+    )),
     advhftreat = ynfac(
-      if_else(advhf == "Yes" &
-        shf_age < 70 &
+      if_else(shf_age <= 70 &
         sos_com_dialysis == "No" &
-        shf_gfrckdepi >= 30 &
-        sos_com_cancer3y == "No", 1, 0)
+        sos_com_cancer3y == "No" &
+        sos_com_lvad == "No" & !is.na(sos_com_lvad) & sos_com_htx == "No", 1, 0)
     ),
     shf_indexyear_cat = factor(case_when(
-      shf_indexyear <= 2010 ~ "2003-2010",
-      shf_indexyear <= 2015 ~ "2011-2015",
-      shf_indexyear <= 2020 ~ "2016-2020",
-      shf_indexyear <= 2023 ~ "2021-2023"
+      shf_indexyear <= 2007 ~ "2003-2007",
+      shf_indexyear <= 2012 ~ "2008-2012",
+      shf_indexyear <= 2017 ~ "2013-2017",
+      shf_indexyear <= 2022 ~ "2018-2022"
     )),
     shf_age_cat = factor(
       case_when(
         is.na(shf_age) ~ NA_real_,
-        shf_age < 70 ~ 1,
-        shf_age >= 70 ~ 2
+        shf_age <= 70 ~ 1,
+        shf_age > 70 ~ 2
       ),
       levels = 1:2,
-      labels = c("<70", ">=70")
+      labels = c("<=70", ">70")
     ),
     shf_bpsys_cat = factor(
       case_when(

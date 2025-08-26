@@ -11,12 +11,12 @@ hush <- function(code) {
 }
 
 estfunc_inner2 <- function(model, datain) {
-  std_fit <- stdGlm(model, data = transform(datain, time = 36525), X = "indexyear_fac")
+  std_fit <- stdGlm(model, data = transform(datain, time = 36525), X = "indexyear_use")
   std_sum <- summary(std_fit, CI.type = "log")
   out <- std_sum[["est.table"]] %>%
-    as_tibble(rownames = "indexyear_fac") %>%
+    as_tibble(rownames = "indexyear_use") %>%
     mutate(
-      indexyear = as.numeric(indexyear_fac),
+      indexyear = as.numeric(factor(indexyear_use)),
       r = paste0(fn(Estimate, 1), " (", fn(`lower 0.95`, 1), "-", fn(`upper 0.95`, 1), ")")
     )
 
@@ -27,9 +27,9 @@ estfunc_inner2 <- function(model, datain) {
   ))
 
   out <- out %>%
-    select(indexyear_fac, r) %>%
+    select(indexyear_use, r) %>%
     add_row(
-      indexyear_fac = "eAPC",
+      indexyear_use = "eAPC",
       r = paste0(
         fn(apc$eapc, 1), " (", fn(apc$eapc_low, 1),
         " - ", fn(apc$eapc_up, 1), ")"
@@ -39,14 +39,13 @@ estfunc_inner2 <- function(model, datain) {
 
 estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
   data <- data %>%
-    filter(advhf == "Yes") %>%
     rename(
       time = !!sym(time),
       event = !!sym(event)
     )
 
   ev <- data %>%
-    group_by(indexyear_fac) %>%
+    group_by(indexyear_use) %>%
     summarise(
       ev = sum(event == "Yes"),
       s = sum(time / 365.25),
@@ -57,15 +56,15 @@ estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
       r = ev / s * 100,
       event = paste0(ev, "/", fn(s, 0))
     ) %>%
-    select(indexyear_fac, n, event) %>%
+    select(indexyear_use, n, event) %>%
     add_row(
-      indexyear_fac = "eAPC",
+      indexyear_use = "eAPC",
       n = NA_real_,
       event = ""
     )
 
   # crude
-  poisson_fit <- glm(event == "Yes" ~ indexyear_fac,
+  poisson_fit <- glm(event == "Yes" ~ indexyear_use,
     offset = log(time / 365.25 / 100),
     data = data, family = poisson
   )
@@ -73,7 +72,7 @@ estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
 
   # age sex
   adjvars <- setdiff(c("shf_age", "shf_sex"), novars)
-  poisson_fit <- glm(formula(paste0("event == 'Yes' ~ indexyear_fac +", adjvars)),
+  poisson_fit <- glm(formula(paste0("event == 'Yes' ~ indexyear_use +", adjvars)),
     offset = log(time / 365.25 / 100),
     data = data, family = poisson
   )
@@ -81,28 +80,34 @@ estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
 
   outall <- bind_cols(
     ev,
-    crude %>% select(-indexyear_fac),
-    as %>% select(-indexyear_fac)
+    crude %>% select(-indexyear_use),
+    as %>% select(-indexyear_use)
   ) %>%
     mutate(var = namegroup) %>%
     select(var, everything())
 }
 
-estfunc <- function(event, time, age = T) {
-  out0 <- estfunc_inner(data = rsdata, event, time, namegroup = "All")
-  out3 <- estfunc_inner(data = rsdata %>% filter(shf_sex == "Female"), event, time, novars = "shf_sex", namegroup = "Female")
-  out4 <- estfunc_inner(data = rsdata %>% filter(shf_sex == "Male"), event, time, novars = "shf_sex", namegroup = "Male")
+estfunc <- function(data = rsdata, event, time, age = T, yearstart = 2003, yearvar = "indexyear_fac") {
+  data <- data %>%
+    filter(shf_indexyear >= yearstart) %>%
+    mutate(indexyear_use = droplevels(!!sym(yearvar)))
 
+  nyears <- nlevels(data %>% pull(indexyear_use)) + 1
+  firstyears <- levels(data %>% pull(indexyear_use))[1]
+
+  out0 <- estfunc_inner(data = data, event, time, namegroup = "All")
+  out3 <- estfunc_inner(data = data %>% filter(shf_sex == "Female"), event, time, novars = "shf_sex", namegroup = "Female")
+  out4 <- estfunc_inner(data = data %>% filter(shf_sex == "Male"), event, time, novars = "shf_sex", namegroup = "Male")
+
+  out1 <- estfunc_inner(data = data %>% filter(shf_age_cat == "<=70"), event, time, namegroup = "Age (years) <= 70")
   if (age) {
-    out1 <- estfunc_inner(data = rsdata %>% filter(shf_age_cat == "<70"), event, time, namegroup = "Age (years) < 70")
-    out2 <- estfunc_inner(data = rsdata %>% filter(shf_age_cat == ">=70"), event, time, namegroup = "Age (years) >= 70")
-
+    out2 <- estfunc_inner(data = data %>% filter(shf_age_cat == ">70"), event, time, namegroup = "Age (years) > 70")
     outall <- bind_rows(out0, out1, out2, out3, out4)
-    rowspecs <- seq(22, 22 * 4, 22)
+    rowspecs <- seq(nyears, nyears * 4, nyears)
   }
   if (!age) {
-    outall <- bind_rows(out0, out3, out4)
-    rowspecs <- seq(22, 22 * 2, 22)
+    outall <- bind_rows(out0, out1, out3, out4)
+    rowspecs <- seq(nyears, nyears * 3, nyears)
   }
 
   cl <- c(
@@ -110,7 +115,7 @@ estfunc <- function(event, time, age = T) {
   )
 
   outall <- outall %>%
-    mutate(var = if_else(indexyear_fac == 2003, var, ""))
+    mutate(var = if_else(indexyear_use == firstyears, var, ""))
 
   if (output) {
     make_one_xlsxsheet(outall, colnames = cl)
@@ -175,7 +180,7 @@ estfunc(event = outvars$var[i], time = outvars$time[i])
 
 i <- 4
 
-# estfunc(event = outvars$var[i], time = outvars$time[i], age = F)
+estfunc(event = outvars$var[i], time = outvars$time[i], age = F, yearstart = 2015)
 ```
 
 ```{r}
@@ -189,4 +194,30 @@ i <- 4
 i <- 5
 
 estfunc(event = outvars$var[i], time = outvars$time[i], age = F)
+```
+
+```{r}
+#| label: tbl-trendsout-lvad-eltreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends LVAD - patients eligible for advanced HF therapy"
+#| tbl-pos: "H"
+
+i <- 4
+
+estfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], age = F, yearstart = 2015, yearvar = "indexyear_cat_fac")
+```
+
+```{r}
+#| label: tbl-trendsout-htx-eltreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendsoutfunc
+#| tbl-cap: "Temporal trends Htx - patients eligible for advanced HF therapy"
+#| tbl-pos: "H"
+
+i <- 5
+
+estfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], age = F, yearvar = "indexyear_cat_fac")
 ```

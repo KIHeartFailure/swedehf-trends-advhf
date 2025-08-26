@@ -40,16 +40,27 @@ trendprevfunc <- function(data, xvar, eventname, ybreaks = seq(0, 100, 20)) {
   }
   p
 }
-```
+trendprevtabfunc <- function(data, xvar) {
+  prop <- data %>%
+    group_by(indexyear_fac) %>%
+    count(!!sym(xvar)) %>%
+    mutate(
+      np = paste0(n, " (", fn(n / sum(n) * 100, 1), "%)")
+    ) %>%
+    ungroup() %>%
+    filter(!!sym(xvar) == "Yes") %>%
+    select(indexyear_fac, np)
 
-```{r}
-#| label: fig-advhf
-#| cache: true
-#| cache.comments: false
-#| dependson: trendprevfunc
-#| fig-cap: "Temporal trends Advanced HF"
+  cl <- c("Year", "n (%)")
 
-trendprevfunc(data = rsdata, xvar = "advhf", eventname = "Advanced HF")
+  if (output) {
+    make_one_xlsxsheet(prop, colnames = cl)
+  }
+
+  default_kable(prop,
+    col.names = cl
+  )
+}
 ```
 
 ```{r}
@@ -57,6 +68,17 @@ trendprevfunc(data = rsdata, xvar = "advhf", eventname = "Advanced HF")
 #| cache: true
 #| cache.comments: false
 #| dependson: trendprevfunc
-#| fig-cap: "Temporal trends Advanced HF eligible for AdvHF therapies"
-trendprevfunc(data = rsdata %>% filter(advhf == "Yes"), xvar = "advhftreat", eventname = "Eligible for AdvHF therapies")
+#| fig-cap: "Temporal trends eligible for AdvHF therapies"
+trendprevfunc(data = rsdata, xvar = "advhftreat", eventname = "Eligible for AdvHF therapies")
+```
+
+```{r}
+#| label: tbl-advhftreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendprevfunc
+#| tbl-cap: "Temporal trends eligible for AdvHF therapies"
+#| tbl-pos: "H"
+
+trendprevtabfunc(data = rsdata, xvar = "advhftreat")
 ```

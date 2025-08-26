@@ -1,5 +1,5 @@
 ---
-title: "Statistical report: Trends in prevalence and in mortality of patients with advanced heart failure with reduced EF in Sweden between 2003 and 2023"
+title: "Statistical report: Trends in prevalence and in mortality of patients with advanced heart failure with reduced EF in Sweden between 2003 and 2022"
 subtitle: DRAFT
 date: "`r Sys.Date()`"
 cover: static/ki_logo_vert_rgb.png
@@ -116,11 +116,10 @@ comparisons were made and therefore the results should be viewed with care.
 
 ## Baseline characteristics
 
-Baseline characteristics are presented by advanced heart failure. 
 Categorical variables are presented with n and percentage and tested for 
-differences between groups with the chi-square test. 
+differences between patients eligible and not eligible for advanced HF therapy with the chi-square test. 
 Continuous variables are presented with median [first quartile-third quartile] and tested for 
-differences between groups with the Kruskal-Wallis test. 
+differences between patients eligible and not eligible for advanced HF therapy with the Kruskal-Wallis test. 
 
 ## Trends in 1 year outcomes
 
@@ -132,7 +131,9 @@ The following outcomes are considered:
 - `r outvars$name[4]`
 - `r outvars$name[5]`
 
-Time trends will be calculated by dividing the number of first events per patient-years and presented as events per 100 person-years with Poisson rate 95% confidence intervals (CI). To identify possible mediators of potential time trends, standardized incidence rates will be obtained by Poisson regression, with stepwise adjustments as i) crude, ii) age and sex. The estimated annual percent change (eAPC) was also calculated using Poisson regression. 
+Time trends will be calculated by dividing the number of first events per patient-years and presented as events per 100 person-years with Poisson rate 95% confidence intervals (CI). 
+To identify possible mediators of potential time trends, standardized incidence rates will be obtained by Poisson regression, partly crude and partly adjusting for age and sex. 
+The estimated annual percent change (eAPC) was also calculated using Poisson regression. 
 
 \clearpage
 
@@ -179,12 +180,13 @@ The below is WITHIN advHF (so the curves will at each year sum to 100%). Is this
 
 \clearpage
 
-{{< include src/trendsout.qmd >}}
+{{< include src/trendsout_tabs.qmd >}}
+
+\clearpage
 
 TO BE ADDED: 
 
-- LVAD outcome (now not for all years so need to know if years available or not)
-- APC for prevalence 
+- tables for prevalance (now only in figs). However - see question. 
 
 \clearpage
 

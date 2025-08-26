@@ -42,6 +42,8 @@ ihdspec <- paste0(
   paste0("OP:", str_remove_all(paste0(ihdspec[str_detect(ihdspec, "OP")], collapse = ","), "OP:"))
 )
 
+lvadspec <- paste0(outcommeta %>% filter(Variable == "sos_out_lvad") %>% pull(Code), ". For previous LVAD also FXL00 without FXM0 within 120 days")
+
 vars <- vars %>%
   mutate(
     label = coalesce(name, label),
@@ -50,7 +52,6 @@ vars <- vars %>%
     Variable = str_replace_all(Variable, fixed("Disposable income (100 SEK)"), "Income"), ,
     Code = case_when(
       Variable == "Non-CV death" ~ "ICD All exept I, J81, K761, R570, G45",
-      Variable == "Previous HFH <= 6 months" ~ paste0("ICD ", str_replace_all(global_hficd, "\\|", ",")),
       TRUE ~ Code
     )
   )
@@ -61,6 +62,7 @@ vars <- vars %>%
     order = 1:n(),
     Code = str_trim(Code),
     Code = if_else(Variable == "Ischemic heart disease", ihdspec, Code),
+    Code = if_else(Variable == "Ventricular assist device implantation", lvadspec, Code),
     Code = str_replace_all(Code, "ICD", "ICD-10"),
     Code = case_when(
       is.na(Register) ~ Code,
@@ -78,7 +80,7 @@ vars <- vars %>%
   mutate(
     data1 = if_else(str_detect(var, "^shf_"), "SwedeHF", NA),
     data2 = case_when(
-      str_detect(var, "sos_com_|sos_prevhfh6mo") & !is.na(Code) ~ paste0("NPR: ", Code),
+      str_detect(var, "sos_com_") & !is.na(Code) ~ paste0("NPR: ", Code),
       str_detect(var, "sos_com_") ~ "NPR",
       str_detect(var, "sos_out_") & !str_detect(var, "death") & !is.na(Code) ~ paste0("NPR: ", Code)
     ),
@@ -97,7 +99,7 @@ vars <- vars %>%
   unite(datasource, starts_with("data"), sep = "; ", na.rm = TRUE) %>%
   mutate(
     datasource = case_when(
-      Variable == "eGFR" ~ "SwedeHF CKD-EPI 2021 (see reference)",
+      Variable == "eGFR" ~ "SwedeHF CKD-EPI 2021",
       Variable == "Anemia" ~ "SwedeHF Female Hb < 120 g/L/Male Hb < 130 g/L",
       TRUE ~ datasource
     )
@@ -112,7 +114,7 @@ footnotetext <- c(
   "From the year preceeding baseline.",
   "Derived from operations in all positions, in-patient and out-patient speciality.",
   "Cause of death is derived from the underlying cause of death.",
-  "Derived from diagnoses in all positions, in-patient and out-patient speciality care within 10 years prior to index using ICD-9/10 according to Ludvigsson, 2021 (see reference)."
+  "Derived from diagnoses in all positions, in-patient and out-patient speciality care within 10 years prior to index using ICD-9/10 according to Ludvigsson, 2021 [9]."
 )
 
 vars_xls <- vars %>%

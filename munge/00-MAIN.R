@@ -26,7 +26,6 @@ save(
     "rsdata",
     "flow",
     "tabvars",
-    "modvars",
     "outvars",
     "outcommeta",
     "deathmeta",
@@ -37,7 +36,7 @@ save(
 # create workbook to write tables to Excel
 wb <- openxlsx::createWorkbook()
 openxlsx::addWorksheet(wb, sheet = "Information")
-openxlsx::writeData(wb, sheet = "Information", x = "Tables in xlsx format for tables in Statistical report: Trends in prevalence and in mortality of patients with advanced heart failure with reduced EF in Sweden between 2003 and 2023", rowNames = FALSE, keepNA = FALSE)
+openxlsx::writeData(wb, sheet = "Information", x = "Tables in xlsx format for tables in Statistical report: Trends in prevalence and in mortality of patients with advanced heart failure with reduced EF in Sweden between 2003 and 2022", rowNames = FALSE, keepNA = FALSE)
 openxlsx::saveWorkbook(wb,
   file = here::here("output/tabs/tables.xlsx"),
   overwrite = TRUE

@@ -23,10 +23,10 @@ flow <- flow %>%
 # Inclusion/exclusion criteria --------------------------------------------------------
 
 rsdata <- rsdata422 %>%
-  filter(shf_indexyear >= 2003)
+  filter(shf_indexyear >= 2003 & shf_indexyear <= 2022)
 flow <- flow %>%
   add_row(
-    Criteria = "2003-2023",
+    Criteria = "2003-2022",
     N = nrow(rsdata)
   )
 
@@ -59,6 +59,30 @@ rsdata <- rsdata %>%
 flow <- flow %>%
   add_row(
     Criteria = "Include posts with HF duration >= 6 months",
+    N = nrow(rsdata)
+  )
+
+rsdata <- rsdata %>%
+  filter(shf_ef %in% c("<30"))
+flow <- flow %>%
+  add_row(
+    Criteria = "Include posts with EF <30%",
+    N = nrow(rsdata)
+  )
+
+rsdata <- rsdata %>%
+  filter(shf_nyha %in% c("III", "IV"))
+flow <- flow %>%
+  add_row(
+    Criteria = "Include posts with NYHA III-IV",
+    N = nrow(rsdata)
+  )
+
+rsdata <- rsdata %>%
+  filter(sos_timeprevhosphf <= 365 / 2 & !is.na(sos_timeprevhosphf) | sos_location == "HF in-patient")
+flow <- flow %>%
+  add_row(
+    Criteria = "Include posts with >= previous HFH < 6 months",
     N = nrow(rsdata)
   )
 

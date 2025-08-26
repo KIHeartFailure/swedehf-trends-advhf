@@ -23,7 +23,7 @@ ds <- tibble(
   ),
   coverage = c("In 2023, 69 of 76 Swedish hospitals enrolled patients in SwedeHF, which had a 59% coverage of the prevalent HF population in Sweden", "~100", "~100", "~100", "~100"),
   year = c("2000 (2003 on a national level)-", "1968-", "1990-", "1964- Hospitalizations, 1987- Nationwide coverage, 1997- Outpatient surgery, 2001- Specialized outpatient visits", "1961-"),
-  ref = c("@swedehf @annualreport", "@rtb", "@lisa", "@npr", "@dors")
+  ref = c("[3][4]", "[7]", "[5]", "[8]", "[6]")
 )
 
 cn <- c("Register name", "Administrator", "Type of data", "Coverage", "Start year", "Reference")

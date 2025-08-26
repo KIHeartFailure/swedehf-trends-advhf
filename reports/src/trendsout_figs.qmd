@@ -3,10 +3,11 @@
 #| cache: true
 #| cache.comments: false
 
-trendfunc <- function(event, time, eventname, strata = NULL, addstrataname = NULL, ybreaks = NULL) {
-  r <- rsdata %>%
-    filter(advhf == "Yes") %>%
-    group_by(!!sym(strata), indexyear_fac) %>%
+trendfunc <- function(data = rsdata, event, time, eventname, strata = NULL, addstrataname = NULL, ybreaks = NULL, yearstart = 2003, yearvar = "indexyear_fac") {
+  r <- data %>%
+    filter(shf_indexyear >= yearstart) %>%
+    mutate(!!sym(yearvar) := droplevels(!!sym(yearvar))) %>%
+    group_by(!!sym(strata), !!sym(yearvar)) %>%
     summarise(
       ev = sum(!!sym(event) == "Yes"),
       s = sum(!!sym(time) / 365.25),
@@ -17,12 +18,13 @@ trendfunc <- function(event, time, eventname, strata = NULL, addstrataname = NUL
       rate = ev / s * 100,
       level = paste0(addstrataname, level),
       level = str_replace_all(level, ">=", "\u2265"),
+      level = str_replace_all(level, "<=", "\u2264"),
       level = fct_inorder(level)
     )
 
   if (strata == "all") {
     p <- r %>% ggplot(
-      aes(x = indexyear_fac, y = rate, group = 1)
+      aes(x = !!sym(yearvar), y = rate, group = 1)
     ) +
       geom_line(linewidth = 1, colour = global_cols[1]) +
       geom_point(size = 2, colour = global_cols[1]) +
@@ -42,7 +44,7 @@ trendfunc <- function(event, time, eventname, strata = NULL, addstrataname = NUL
 
   if (strata != "all") {
     p <- r %>% ggplot(
-      aes(x = indexyear_fac, y = rate, group = level)
+      aes(x = !!sym(yearvar), y = rate, group = level)
     ) +
       geom_line(linewidth = 1, aes(color = level), show.legend = T) +
       geom_point(aes(col = level), size = 2, show.legend = T) +
@@ -87,7 +89,7 @@ trendfunc <- function(event, time, eventname, strata = NULL, addstrataname = NUL
 #| layout-nrow: 2
 
 i <- 1
-ybreaks <- seq(0, 120, 20)
+ybreaks <- seq(0, 100, 20)
 
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
@@ -145,9 +147,9 @@ trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$sh
 i <- 4
 ybreaks <- seq(0, 20, 5)
 
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearstart = 2015)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks, yearstart = 2015)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks, yearstart = 2015)
 ```
 
 
@@ -167,4 +169,46 @@ ybreaks <- seq(0, 20, 5)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks)
+```
+
+
+```{r}
+#| label: fig-lvad-eltreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendfunc
+#| fig-cap: "Temporal trends LVAD - patients eligible for advanced HF therapy"
+#| fig-subcap: !expr c("All", "Sex")
+#| layout-ncol: 2
+#| layout-nrow: 2
+
+i <- 4
+ybreaks <- seq(0, 20, 5)
+
+trendfunc(
+  data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks,
+  yearstart = 2015, yearvar = "indexyear_cat_fac"
+)
+trendfunc(
+  data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks,
+  yearstart = 2015, yearvar = "indexyear_cat_fac"
+)
+```
+
+
+```{r}
+#| label: fig-htx-eltreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendfunc
+#| fig-cap: "Temporal trends Htx - patients eligible for advanced HF therapy"
+#| fig-subcap: !expr c("All", "Sex")
+#| layout-ncol: 2
+#| layout-nrow: 2
+
+i <- 5
+ybreaks <- seq(0, 20, 5)
+
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
 ```
