@@ -121,6 +121,10 @@ differences between patients eligible and not eligible for advanced HF therapy w
 Continuous variables are presented with median [first quartile-third quartile] and tested for 
 differences between patients eligible and not eligible for advanced HF therapy with the Kruskal-Wallis test. 
 
+## Trends in patients eligible for AdvHF therapies and selected baseline characteristics
+
+Trends in the proportion of patients eligible for AdvHF therapies as well as patients in each age group, sex and GDMT are presented descriptively. 
+
 ## Trends in 1 year outcomes
 
 The following outcomes are considered: 
@@ -134,6 +138,13 @@ The following outcomes are considered:
 Time trends will be calculated by dividing the number of first events per patient-years and presented as events per 100 person-years with Poisson rate 95% confidence intervals (CI). 
 To identify possible mediators of potential time trends, standardized incidence rates will be obtained by Poisson regression, partly crude and partly adjusting for age and sex. 
 The estimated annual percent change (eAPC) was also calculated using Poisson regression. 
+
+For LVAD only years from 2015 are presented due to the change of operation codes this year. 
+
+## Sensitivity analysis
+
+2015 the coding procedure for LVAD changed and the LVAD definition is not completely comparable before and after 2015. 
+We therefore performed a sensitivity analysis for selected analyses not excluding patients with previous LVAD in order to see if this had an effect in the time trends. 
 
 \clearpage
 
@@ -160,19 +171,19 @@ The median (q1-q3) age is `r med` and `r percfem`% females.
 
 ## Baseline characteristics
 
-Please check variables in table. Need any others? 
-
 {{< include src/base_tab.qmd >}}
 
 \clearpage
 
-{{< include src/trendsprev_figs.qmd >}}
+{{< include src/trendsprev.qmd >}}
 
 \clearpage
 
-The below is WITHIN advHF (so the curves will at each year sum to 100%). Is this what you are after?
-
 {{< include src/trendsprevbase_figs.qmd >}}
+
+\clearpage
+
+{{< include src/trendsprevbase_tabs.qmd >}}
 
 \clearpage
 
@@ -181,12 +192,6 @@ The below is WITHIN advHF (so the curves will at each year sum to 100%). Is this
 \clearpage
 
 {{< include src/trendsout_tabs.qmd >}}
-
-\clearpage
-
-TO BE ADDED: 
-
-- tables for prevalance (now only in figs). However - see question. 
 
 \clearpage
 

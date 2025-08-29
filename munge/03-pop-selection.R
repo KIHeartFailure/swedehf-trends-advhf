@@ -22,7 +22,7 @@ flow <- flow %>%
 
 # Inclusion/exclusion criteria --------------------------------------------------------
 
-rsdata <- rsdata422 %>%
+rsdata <- rsdata %>%
   filter(shf_indexyear >= 2003 & shf_indexyear <= 2022)
 flow <- flow %>%
   add_row(
@@ -87,6 +87,23 @@ flow <- flow %>%
   )
 
 rsdata <- rsdata %>%
+  filter(sos_com_htx == "No")
+flow <- flow %>%
+  add_row(
+    Criteria = "Exclude previous Htx",
+    N = nrow(rsdata)
+  )
+
+rsdatatmp <- rsdata
+rsdata <- rsdata %>%
+  filter(sos_com_lvad == "No")
+flow <- flow %>%
+  add_row(
+    Criteria = "Exclude previous LVAD",
+    N = nrow(rsdata)
+  )
+
+rsdata <- rsdata %>%
   group_by(lopnr) %>%
   arrange(shf_indexdtm) %>%
   slice(n()) %>%
@@ -95,6 +112,23 @@ flow <- flow %>%
   add_row(
     Criteria = "Last post / patient",
     N = nrow(rsdata)
+  )
+
+prevlvad <- rsdatatmp %>%
+  filter(sos_com_lvad == "Yes")
+
+rsdata_sens <- bind_rows(
+  prevlvad %>% mutate(org = 1),
+  rsdata %>% mutate(org = 2)
+) %>%
+  group_by(lopnr) %>%
+  arrange(org, shf_indexdtm) %>%
+  slice(n()) %>%
+  ungroup()
+flow <- flow %>%
+  add_row(
+    Criteria = "Sensitivity analyses - not excluding patients with previous LVAD",
+    N = nrow(rsdata_sens)
   )
 
 rm(rsdata422)

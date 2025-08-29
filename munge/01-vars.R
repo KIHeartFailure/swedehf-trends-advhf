@@ -51,8 +51,8 @@ tabvars <- c(
   "shf_asaantiplatelet",
   "shf_statin",
   "shf_device_cat",
-  "sos_com_lvad",
-  "sos_com_htx",
+  # "sos_com_lvad",
+  # "sos_com_htx",
 
   # lab measurements
   "shf_gfrckdepi",

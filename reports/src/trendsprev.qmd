@@ -1,0 +1,102 @@
+```{r}
+#| label: trendprevfunc
+#| cache: true
+#| cache.comments: false
+
+prop <- rsdata %>%
+  group_by(indexyear_fac) %>%
+  count(advhftreat) %>%
+  mutate(
+    tot = sum(n),
+    p = n / tot * 100,
+    np = paste0(n, "/", tot, " (", fn(p, 0), "%)"),
+  ) %>%
+  ungroup() %>%
+  filter(advhftreat == "Yes")
+```
+
+```{r}
+#| label: fig-advhftreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendprevfunc
+#| fig-cap: "Temporal trends eligible for AdvHF therapies"
+
+p <- prop %>% ggplot(
+  aes(x = indexyear_fac, y = p, group = 1)
+) +
+  geom_line(linewidth = 1, colour = global_cols[1]) +
+  geom_point(size = 2, colour = global_cols[1]) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+  theme_classic() +
+  theme(
+    panel.grid.major = element_line(
+      color = "lightgrey",
+      linewidth = 0.5,
+      linetype = 2
+    ),
+    text = element_text(size = 15, face = "bold"),
+    axis.text = element_text(color = "black")
+  ) +
+  labs(x = "Year", y = "Eligible for AdvHF therapies, %") +
+  scale_y_continuous(
+    limits = c(0, 100), breaks = seq(0, 100, 20)
+  )
+
+if (output) {
+  create_pptx(p)
+}
+p
+```
+
+```{r}
+#| label: tbl-advhftreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendprevfunc
+#| tbl-cap: "Temporal trends eligible for AdvHF therapies"
+#| tbl-pos: "H"
+
+proptab <- prop %>%
+  select(indexyear_fac, np)
+
+cl <- c("Year", "n/N (%)")
+
+if (output) {
+  make_one_xlsxsheet(proptab, colnames = cl)
+}
+
+default_kable(proptab,
+  col.names = cl
+)
+```
+
+```{r}
+#| label: tbl-advhftreat-sens
+#| cache: true
+#| cache.comments: false
+#| tbl-cap: "Temporal trends eligible for AdvHF therapies - sensitivity analysis including patients with previous LVAD"
+#| tbl-pos: "H"
+
+proptab <- rsdata_sens %>%
+  group_by(indexyear_fac) %>%
+  count(advhftreat) %>%
+  mutate(
+    tot = sum(n),
+    p = n / tot * 100,
+    np = paste0(n, "/", tot, " (", fn(p, 0), "%)"),
+  ) %>%
+  ungroup() %>%
+  filter(advhftreat == "Yes") %>%
+  select(indexyear_fac, np)
+
+cl <- c("Year", "n/N (%)")
+
+if (output) {
+  make_one_xlsxsheet(proptab, colnames = cl)
+}
+
+default_kable(proptab,
+  col.names = cl
+)
+```

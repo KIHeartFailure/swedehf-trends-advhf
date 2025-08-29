@@ -42,7 +42,7 @@ ihdspec <- paste0(
   paste0("OP:", str_remove_all(paste0(ihdspec[str_detect(ihdspec, "OP")], collapse = ","), "OP:"))
 )
 
-lvadspec <- paste0(outcommeta %>% filter(Variable == "sos_out_lvad") %>% pull(Code), ". For previous LVAD also FXL00 without FXM0 within 120 days")
+lvadspec <- paste0(outcommeta %>% filter(Variable == "sos_out_lvad") %>% pull(Code), "or FXL00 without FXM0 during the same hospitalization")
 
 vars <- vars %>%
   mutate(

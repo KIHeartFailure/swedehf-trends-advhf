@@ -2,6 +2,8 @@ load(file = paste0(shfdbpath, "/data/", datadate, "/patregrsdata.RData"))
 
 # Comorbidities -----------------------------------------------------------
 
+rsdata <- rsdata422
+
 rsdata <- create_sosvar(
   sosdata = patregrsdata,
   cohortdata = rsdata,
@@ -21,36 +23,32 @@ lvad2014 <- patregrsdata %>%
     dev = str_detect(OP_all, " FXL00"),
     exdev = str_detect(OP_all, " FXM0")
   ) %>%
-  select(lopnr, dev, exdev, INDATUM)
+  select(lopnr, dev, exdev, INDATUM) %>%
+  rename(devdtm = INDATUM) %>%
+  filter(dev & !exdev)
 
-lvad20142 <- full_join(lvad2014 %>% filter(dev) %>% rename(devdtm = INDATUM) %>% select(-exdev),
-  lvad2014 %>% filter(exdev) %>% rename(exdevdtm = INDATUM) %>% select(-dev),
-  by = c("lopnr")
+lvad20142 <- left_join(rsdata %>% select(lopnr, shf_indexdtm),
+  lvad2014,
+  by = "lopnr"
 ) %>%
-  mutate(
-    diff = as.numeric(exdevdtm - devdtm),
-    lvad = case_when(
-      is.na(exdev) ~ 1,
-      diff < 0 ~ 1,
-      diff >= 120 ~ 1,
-      TRUE ~ 0
-    )
-  ) %>%
-  filter(lvad == 1) %>%
-  group_by(lopnr) %>%
+  mutate(diff = as.numeric(devdtm - shf_indexdtm))
+
+lvadcom <- lvad20142 %>%
+  filter(diff <= 0) %>%
+  group_by(lopnr, shf_indexdtm) %>%
   arrange(devdtm) %>%
   slice(1) %>%
   ungroup() %>%
-  select(lopnr, lvad, devdtm)
+  select(lopnr, shf_indexdtm, devdtm)
 
 rsdata <- left_join(rsdata,
-  lvad20142,
-  by = "lopnr"
+  lvadcom,
+  by = c("lopnr", "shf_indexdtm")
 ) %>%
   mutate(
-    lvad = if_else(devdtm <= shf_indexdtm & !is.na(devdtm), 1, 0),
-    sos_com_lvad = ynfac(if_else(sos_com_lvad == "Yes" | lvad == 1, 1, 0))
-  )
+    sos_com_lvad = ynfac(if_else(sos_com_lvad == "Yes" | !is.na(devdtm), 1, 0))
+  ) %>%
+  select(-devdtm)
 
 
 rsdata <- create_sosvar(
@@ -82,6 +80,24 @@ rsdata <- create_sosvar(
   valsclass = "fac",
   warnings = FALSE
 )
+
+lvadout <- lvad20142 %>%
+  filter(diff > 0 & diff <= global_fu) %>%
+  group_by(lopnr, shf_indexdtm) %>%
+  arrange(devdtm) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(lopnr, shf_indexdtm, diff)
+
+rsdata <- left_join(rsdata,
+  lvadout,
+  by = c("lopnr", "shf_indexdtm")
+) %>%
+  mutate(
+    sos_out_lvad = ynfac(if_else(sos_out_lvad == "Yes" | !is.na(diff), 1, 0)),
+    sos_outtime_lvad = pmin(sos_outtime_lvad, diff, na.rm = T)
+  ) %>%
+  select(-diff)
 
 rsdata <- create_sosvar(
   sosdata = patregrsdata,

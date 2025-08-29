@@ -14,8 +14,8 @@ load(here(paste0(shfdbpath, "data/v422/meta_statreport.RData")))
 # Munge data --------------------------------------------------------------
 
 source(here("munge/01-vars.R"))
-source(here("munge/02-pop-selection.R"))
-source(here("munge/03-npr-comorbout.R"))
+source(here("munge/02-npr-comorbout.R"))
+source(here("munge/03-pop-selection.R"))
 source(here("munge/04-fix-vars.R"))
 
 # Cache/save data ---------------------------------------------------------
@@ -24,6 +24,7 @@ save(
   file = here("data/clean-data/rsdata.RData"),
   list = c(
     "rsdata",
+    "rsdata_sens",
     "flow",
     "tabvars",
     "outvars",

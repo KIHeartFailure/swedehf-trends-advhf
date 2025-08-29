@@ -1,0 +1,88 @@
+```{r}
+#| label: trendbasetabfunc
+#| cache: true
+#| cache.comments: false
+
+trendbasetabfunc_inner <- function(data = data, strata, strataname = "", val = "all") {
+  prop <- data %>%
+    filter(!is.na(!!sym(strata))) %>%
+    group_by(indexyear_fac, .drop = F) %>%
+    count(!!sym(strata)) %>%
+    mutate(
+      tot = sum(n),
+      p = n / tot * 100,
+      np = paste0(n, "/", tot, " (", fn(p, 0), "%)"),
+      np = case_when(
+        n == 0 ~ "-",
+        n < 10 ~ "<10",
+        TRUE ~ np
+      ),
+      pats = paste(strataname, !!sym(strata)),
+      pats = str_remove_all(pats, " Yes"),
+      pats = if_else(indexyear_fac == 2003, pats, "")
+    ) %>%
+    ungroup() %>%
+    select(pats, indexyear_fac, np, !!sym(strata)) %>%
+    arrange(!!sym(strata))
+
+
+  if (val != "all") {
+    prop <- prop %>% filter(!!sym(strata) == "Yes")
+  }
+  prop <- prop %>%
+    select(-!!sym(strata))
+}
+
+trendbasetabfunc <- function(data = rsdata, age = T) {
+  sex <- trendbasetabfunc_inner(data = data, strata = "shf_sex")
+  cci <- trendbasetabfunc_inner(data = data, strata = "sos_com_charlsonci_cat", strataname = "CCI ")
+  rasi <- trendbasetabfunc_inner(data = data, strata = "shf_rasiarni", strataname = "RASi/ARNi", val = "Yes")
+  bbl <- trendbasetabfunc_inner(data = data, strata = "shf_bbl", strataname = "Beta-blocker", val = "Yes")
+  mra <- trendbasetabfunc_inner(data = data, strata = "shf_mra", strataname = "MRA", val = "Yes")
+
+  nyears <- nlevels(data %>% pull(indexyear_fac))
+
+  if (age) {
+    age <- trendbasetabfunc_inner(data = data, strata = "shf_age_cat", strataname = "Age (years) ")
+    propall <- bind_rows(age, sex, cci, rasi, bbl, mra)
+    rowspecs <- seq(nyears, nyears * 9, nyears)
+  } else {
+    propall <- bind_rows(sex, cci, rasi, bbl, mra)
+    rowspecs <- seq(nyears, nyears * 7, nyears)
+  }
+  cl <- c("Patients", "Year", "n/N (%)")
+
+  if (output) {
+    make_one_xlsxsheet(propall, colnames = cl)
+  }
+
+  default_kable(propall,
+    col.names = cl,
+    longtable = TRUE,
+    font_size = 6.5
+  ) %>%
+    row_spec(rowspecs, hline_after = T)
+}
+```
+
+```{r}
+#| label: tbl-baseadvhf
+#| cache: true
+#| cache.comments: false
+#| dependson: trendbasetabfunc
+#| tbl-cap: "Temporal trends in baseline characteristics"
+#| tbl-pos: "H"
+
+trendbasetabfunc()
+```
+
+```{r}
+#| label: tbl-baseadvhftreat
+#| cache: true
+#| cache.comments: false
+#| dependson: trendbasetabfunc
+#| tbl-cap: "Temporal trends in baseline characteristics for patients eligible for AdvHF therapies"
+#| tbl-pos: "H"
+
+trendbasetabfunc(data = rsdata %>% filter(advhftreat == "Yes"), age = F)
+```

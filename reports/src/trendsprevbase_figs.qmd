@@ -3,29 +3,51 @@
 #| cache: true
 #| cache.comments: false
 
-trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, ybreaks = seq(0, 100, 20), addpos = "first") {
-  nlevel <- nlevels(data %>% pull(!!sym(strata)))
+trendbasegdmtfunc <- function(data, med, medname) {
   prop <- data %>%
-    filter(!is.na(!!sym(strata))) %>%
+    filter(!is.na(!!sym(med))) %>%
     group_by(indexyear_fac, .drop = F) %>%
-    count(!!sym(strata)) %>%
+    count(!!sym(med)) %>%
     mutate(
       tot = sum(n),
-      p = n / tot * 100
+      p = n / tot * 100,
+      level = medname
     ) %>%
     ungroup() %>%
-    rename(level = !!sym(strata)) %>%
-    mutate(
-      level = case_when(
-        addpos == "first" ~ paste(addstrataname, level),
-        addpos == "last" ~ paste(level, addstrataname),
-        TRUE ~ level
-      ),
-      level = str_remove_all(level, "Yes "),
-      level = str_replace_all(level, ">=", "\u2265"),
-      level = str_replace_all(level, "<=", "\u2264"),
-      level = fct_inorder(level)
-    )
+    filter(!!sym(med) == "Yes") %>%
+    select(indexyear_fac, p, level)
+}
+
+trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, ybreaks = seq(0, 100, 20), gdmt = F) {
+  if (!gdmt) {
+    nlevel <- nlevels(data %>% pull(!!sym(strata)))
+    prop <- data %>%
+      filter(!is.na(!!sym(strata))) %>%
+      group_by(indexyear_fac, .drop = F) %>%
+      count(!!sym(strata)) %>%
+      mutate(
+        tot = sum(n),
+        p = n / tot * 100
+      ) %>%
+      ungroup() %>%
+      rename(level = !!sym(strata)) %>%
+      mutate(
+        level = paste0(addstrataname, level),
+        level = str_replace_all(level, ">=", "\u2265"),
+        level = str_replace_all(level, "<=", "\u2264"),
+        level = fct_inorder(level)
+      )
+  }
+
+  if (gdmt) {
+    nlevel <- 3
+    rasi <- trendbasegdmtfunc(data = data, med = "shf_rasiarni", medname = "RASi/ARNi")
+    bbl <- trendbasegdmtfunc(data = data, med = "shf_bbl", medname = "Beta-blocker")
+    mra <- trendbasegdmtfunc(data = data, med = "shf_mra", medname = "MRA")
+
+    prop <- bind_rows(rasi, bbl, mra) %>%
+      mutate(level = fct_inorder(level))
+  }
 
   p <- prop %>% ggplot(
     aes(x = indexyear_fac, y = p, group = level)
@@ -65,16 +87,14 @@ trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, yb
 #| cache.comments: false
 #| dependson: trendbasefunc
 #| fig-cap: "Temporal trends in baseline characteristics"
-#| fig-subcap: !expr c("Age", "Sex", "CCI", "Beta-blocker", "RASi/ARNi", "MRA")
+#| fig-subcap: !expr c("Age", "Sex", "CCI", "GDMT")
 #| layout-ncol: 2
 #| layout-nrow: 3
 
-trendbasefunc(strata = "shf_age_cat", addstrataname = "Age (years)")
+trendbasefunc(strata = "shf_age_cat", addstrataname = "Age (years) ")
 trendbasefunc(strata = "shf_sex")
-trendbasefunc(strata = "sos_com_charlsonci_cat", addstrataname = "CCI")
-trendbasefunc(strata = "shf_bbl", addstrataname = "Beta-blocker", addpos = "last")
-trendbasefunc(strata = "shf_rasiarni", addstrataname = "RASi/ARNi", addpos = "last")
-trendbasefunc(strata = "shf_mra", addstrataname = "MRA", addpos = "last")
+trendbasefunc(strata = "sos_com_charlsonci_cat", addstrataname = "CCI ")
+trendbasefunc(gdmt = T)
 ```
 
 ```{r}
@@ -83,13 +103,11 @@ trendbasefunc(strata = "shf_mra", addstrataname = "MRA", addpos = "last")
 #| cache.comments: false
 #| dependson: trendbasefunc
 #| fig-cap: "Temporal trends in baseline characteristics for patients eligible for AdvHF therapies"
-#| fig-subcap: !expr c("Sex", "CCI", "Beta-blocker", "RASi/ARNi", "MRA")
+#| fig-subcap: !expr c("Sex", "CCI", "GDMT")
 #| layout-ncol: 2
 #| layout-nrow: 3
 
 trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), strata = "shf_sex")
-trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), strata = "sos_com_charlsonci_cat", addstrataname = "CCI")
-trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), strata = "shf_bbl", addstrataname = "Beta-blocker", addpos = "last")
-trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), strata = "shf_rasiarni", addstrataname = "RASi/ARNi", addpos = "last")
-trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), strata = "shf_mra", addstrataname = "MRA", addpos = "last")
+trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), strata = "sos_com_charlsonci_cat", addstrataname = "CCI ")
+trendbasefunc(data = rsdata %>% filter(advhftreat == "Yes"), gdmt = T)
 ```

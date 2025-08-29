@@ -87,8 +87,12 @@ estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
     select(var, everything())
 }
 
-estfunc <- function(data = rsdata, event, time, age = T, yearstart = 2003, yearvar = "indexyear_fac") {
-  data <- data %>%
+estfunc <- function(event, time, agesex = T, yearstart = 2003, yearvar = "indexyear_fac") {
+  data <- rsdata %>%
+    filter(shf_indexyear >= yearstart) %>%
+    mutate(indexyear_use = droplevels(!!sym(yearvar)))
+
+  data2 <- rsdata_sens %>%
     filter(shf_indexyear >= yearstart) %>%
     mutate(indexyear_use = droplevels(!!sym(yearvar)))
 
@@ -96,23 +100,25 @@ estfunc <- function(data = rsdata, event, time, age = T, yearstart = 2003, yearv
   firstyears <- levels(data %>% pull(indexyear_use))[1]
 
   out0 <- estfunc_inner(data = data, event, time, namegroup = "All")
-  out3 <- estfunc_inner(data = data %>% filter(shf_sex == "Female"), event, time, novars = "shf_sex", namegroup = "Female")
-  out4 <- estfunc_inner(data = data %>% filter(shf_sex == "Male"), event, time, novars = "shf_sex", namegroup = "Male")
+  out10 <- estfunc_inner(data = data2, event, time, namegroup = "Sensitivity analysis including patients with previous LVAD")
 
-  out1 <- estfunc_inner(data = data %>% filter(shf_age_cat == "<=70"), event, time, namegroup = "Age (years) <= 70")
-  if (age) {
+  if (agesex) {
+    out1 <- estfunc_inner(data = data %>% filter(shf_age_cat == "<=70"), event, time, namegroup = "Age (years) <= 70")
     out2 <- estfunc_inner(data = data %>% filter(shf_age_cat == ">70"), event, time, namegroup = "Age (years) > 70")
-    outall <- bind_rows(out0, out1, out2, out3, out4)
-    rowspecs <- seq(nyears, nyears * 4, nyears)
+    out3 <- estfunc_inner(data = data %>% filter(shf_sex == "Female"), event, time, novars = "shf_sex", namegroup = "Female")
+    out4 <- estfunc_inner(data = data %>% filter(shf_sex == "Male"), event, time, novars = "shf_sex", namegroup = "Male")
+
+    outall <- bind_rows(out0, out1, out2, out3, out4, out10)
+    rowspecs <- seq(nyears, nyears * 5, nyears)
   }
-  if (!age) {
-    outall <- bind_rows(out0, out1, out3, out4)
-    rowspecs <- seq(nyears, nyears * 3, nyears)
+  if (!agesex) {
+    out5 <- estfunc_inner(data = data %>% filter(advhftreat == "Yes"), event, time, namegroup = "Patients eligible for advanced HF therapy")
+
+    outall <- bind_rows(out0, out5, out10)
+    rowspecs <- seq(nyears, nyears * 2, nyears)
   }
 
-  cl <- c(
-    "Subgroup", "Year", "N", "Events/sum py", "Crude", "Adjusted age, sex"
-  )
+  cl <- c("Patients", "Year", "N", "Events/sum py", "Crude", "Adjusted age, sex")
 
   outall <- outall %>%
     mutate(var = if_else(indexyear_use == firstyears, var, ""))
@@ -180,7 +186,7 @@ estfunc(event = outvars$var[i], time = outvars$time[i])
 
 i <- 4
 
-estfunc(event = outvars$var[i], time = outvars$time[i], age = F, yearstart = 2015)
+estfunc(event = outvars$var[i], time = outvars$time[i], agesex = F, yearstart = 2015)
 ```
 
 ```{r}
@@ -193,31 +199,5 @@ estfunc(event = outvars$var[i], time = outvars$time[i], age = F, yearstart = 201
 
 i <- 5
 
-estfunc(event = outvars$var[i], time = outvars$time[i], age = F)
-```
-
-```{r}
-#| label: tbl-trendsout-lvad-eltreat
-#| cache: true
-#| cache.comments: false
-#| dependson: trendsoutfunc
-#| tbl-cap: "Temporal trends LVAD - patients eligible for advanced HF therapy"
-#| tbl-pos: "H"
-
-i <- 4
-
-estfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], age = F, yearstart = 2015, yearvar = "indexyear_cat_fac")
-```
-
-```{r}
-#| label: tbl-trendsout-htx-eltreat
-#| cache: true
-#| cache.comments: false
-#| dependson: trendsoutfunc
-#| tbl-cap: "Temporal trends Htx - patients eligible for advanced HF therapy"
-#| tbl-pos: "H"
-
-i <- 5
-
-estfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], age = F, yearvar = "indexyear_cat_fac")
+estfunc(event = outvars$var[i], time = outvars$time[i], agesex = F)
 ```
