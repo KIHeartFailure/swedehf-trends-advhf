@@ -78,6 +78,69 @@ Swedish personal identity number (PIN)[@pin]:
 
 {{< include src/vars.qmd >}}
 
+```{r}
+#| label: tbl-targetdoses
+#| tbl-cap: Target doses
+#| tbl-pos: "H"
+
+koll_bbl <- rsdata %>%
+  count(shf_bblsub) %>%
+  mutate(med = "bbl") %>%
+  rename(sub = shf_bblsub) %>%
+  filter(!is.na(sub))
+koll_acei <- rsdata %>%
+  count(shf_aceisub) %>%
+  mutate(med = "acei") %>%
+  rename(sub = shf_aceisub) %>%
+  filter(!is.na(sub))
+koll_arb <- rsdata %>%
+  count(shf_arbsub) %>%
+  mutate(med = "arb") %>%
+  rename(sub = shf_arbsub) %>%
+  filter(!is.na(sub))
+koll_arni <- rsdata %>%
+  count(shf_arnidose) %>%
+  mutate(med = "arni") %>%
+  filter(!is.na(shf_arnidose))
+koll_mra <- rsdata %>%
+  count(shf_mrasub) %>%
+  mutate(med = "mra") %>%
+  rename(sub = shf_mrasub) %>%
+  filter(!is.na(sub))
+
+tg_all <- bind_rows(koll_bbl, koll_mra, koll_acei, koll_arb, koll_arni) %>% select(med, sub, shf_arnidose)
+
+targetdoses <- inner_join(targetdoses %>% select(-ATC.code, -not.HF.recommended),
+  tg_all,
+  by = c("med", "sub", "shf_arnidose")
+)
+
+targetdoses <- bind_rows(
+  targetdoses %>% filter(med != "arni") %>%
+    mutate(targetdose = paste0(targetdose)),
+  targetdoses %>% filter(med == "arni") %>%
+    select(-targetdose) %>%
+    rename(targetdose = targetdosearni) %>%
+    group_by(med, targetdose) %>%
+    summarise(shf_arnidose = paste0(shf_arnidose, collapse = ", "), .groups = "drop")
+) %>%
+  mutate(
+    med = case_when(
+      med == "bbl" ~ "Beta-blocker",
+      med == "mra" ~ "MRA",
+      med == "acei" ~ "ACEi",
+      med == "arb" ~ "ARB",
+      med == "arni" ~ "ARNi"
+    )
+  ) %>%
+  select(-targetdosearni)
+
+
+default_kable(targetdoses,
+  col.names = c("Medication", "Substance", "ARNi dose", "Targetdose")
+)
+```
+
 More information on data sources, definitions etc. are found https://kiheartfailure.github.io/shfdb4/.
 
 ## Inclusion/exclusion criteria
@@ -139,35 +202,9 @@ Time trends will be calculated by dividing the number of first events per patien
 To identify possible mediators of potential time trends, standardized incidence rates will be obtained by Poisson regression, partly crude and partly adjusting for age and sex. 
 The estimated annual percent change (eAPC) was also calculated using Poisson regression. 
 
-For LVAD only years from 2015 are presented due to the change of operation codes this year. 
-
-## Sensitivity analysis
-
-2015 the coding procedure for LVAD changed and the LVAD definition is not completely comparable before and after 2015. 
-We therefore performed a sensitivity analysis for selected analyses not excluding patients with previous LVAD in order to see if this had an effect in the time trends. 
-
 \clearpage
 
 # Results
-
-```{r}
-med <- rsdata %>%
-  summarise(
-    med = fn(median(shf_age), dig = 0),
-    q1 = fn(quantile(shf_age, probs = 0.25), dig = 0),
-    q3 = fn(quantile(shf_age, probs = 0.75), dig = 0)
-  ) %>%
-  mutate(out = paste0(med, " (", q1, "-", q3, ")")) %>%
-  pull(out)
-
-percfem <- rsdata %>%
-  count(shf_sex) %>%
-  mutate(perc = fn(n / sum(n) * 100, 0)) %>%
-  filter(shf_sex == "Female") %>%
-  pull(perc)
-```
-
-The median (q1-q3) age is `r med` and `r percfem`% females. 
 
 ## Baseline characteristics
 

@@ -9,6 +9,7 @@ load(here(shfdbpath, "data/v422/rsdata422.RData"))
 # Meta data ect -----------------------------------------------------------
 
 metavars <- read.xlsx(here(shfdbpath, "metadata/meta_variables.xlsx"))
+targetdoses <- read.xlsx(here("./data/Copia di targetdoses Fede 10.09.2025_RL_LBfix.xlsx"))
 load(here(paste0(shfdbpath, "data/v422/meta_statreport.RData")))
 
 # Munge data --------------------------------------------------------------
@@ -24,13 +25,13 @@ save(
   file = here("data/clean-data/rsdata.RData"),
   list = c(
     "rsdata",
-    "rsdata_sens",
     "flow",
     "tabvars",
     "outvars",
     "outcommeta",
     "deathmeta",
-    "metavars"
+    "metavars",
+    "targetdoses"
   )
 )
 

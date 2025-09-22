@@ -4,9 +4,6 @@
 #| cache.comments: false
 
 basetabfunc <- function(x, data, stratavar, catdig, contdig) {
-  tmp <- data %>%
-    filter(!is.na(!!sym(x)) & !is.na(!!sym(stratavar)))
-
   pmis <- data %>%
     filter(!is.na(!!sym(stratavar))) %>%
     mutate(mis = factor(if_else(is.na(!!sym(x)), 1, 0), levels = 0:1)) %>%
@@ -14,6 +11,14 @@ basetabfunc <- function(x, data, stratavar, catdig, contdig) {
     mutate(pmis = fn(n / sum(n) * 100, catdig)) %>%
     filter(mis == "1") %>%
     pull(pmis)
+
+  tmp <- data %>%
+    filter(!is.na(!!sym(x)) & !is.na(!!sym(stratavar)) & !!sym(x) != "No/missing medication")
+
+  if (str_detect(x, "_tg")) {
+    tmp <- tmp %>%
+      mutate(!!sym(x) := droplevels(!!sym(x)))
+  }
 
   cl <- class(data %>% pull(!!sym(x)))
   if (cl %in% c("character", "factor")) {
@@ -36,7 +41,7 @@ basetabfunc <- function(x, data, stratavar, catdig, contdig) {
     outa <- tmp %>%
       count(!!sym(x), .drop = F) %>%
       mutate(
-        Overall = paste0(n),
+        Overall = paste0(n, " (", fn(n / sum(n) * 100, catdig), ")"),
         Overall = case_when(
           n == 0 ~ "-",
           n < 10 ~ "<10",
@@ -219,7 +224,10 @@ tab <- left_join(tab,
 tab <- tab %>%
   mutate(
     footnote1 = if_else(!is.na(var) & var %in% c("shf_potassium_cat", "shf_potassium"), footnote_marker_alphabet(1, format = "latex"), ""),
-    footnote2 = if_else(!is.na(var) & var %in% c("shf_sglt2"), footnote_marker_alphabet(2, format = "latex"), "")
+    footnote2 = if_else(!is.na(var) & var %in% c("shf_sglt2"), footnote_marker_alphabet(2, format = "latex"), ""),
+    footnote3 = if_else(!is.na(var) & str_detect(var, "_tg"), footnote_marker_alphabet(3, format = "latex"), ""),
+    footnote4 = if_else(!is.na(var) & var %in% c("shf_mra_tg"), footnote_marker_alphabet(4, format = "latex"), ""),
+    footnote5 = if_else(!is.na(var) & var %in% c("shf_rasiarni_tg"), footnote_marker_alphabet(5, format = "latex"), ""),
   ) %>%
   unite(footnote, starts_with("footnote"), sep = "")
 
@@ -228,7 +236,10 @@ cn <- str_remove(cn, "Yes ")
 
 footnotetext <- c(
   "Included in the CRF 2006.",
-  "Included in the CRF April 2021."
+  "Included in the CRF April 2021.",
+  "% missing is for patients with the respective medication.",
+  "Included in the CRF October 2013.",
+  "If a patient has multiple ACEi/ARB/ARNi the highest target dose is selected."
 )
 
 # excel

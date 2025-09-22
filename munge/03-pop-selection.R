@@ -94,7 +94,6 @@ flow <- flow %>%
     N = nrow(rsdata)
   )
 
-rsdatatmp <- rsdata
 rsdata <- rsdata %>%
   filter(sos_com_lvad == "No")
 flow <- flow %>%
@@ -112,23 +111,6 @@ flow <- flow %>%
   add_row(
     Criteria = "Last post / patient",
     N = nrow(rsdata)
-  )
-
-prevlvad <- rsdatatmp %>%
-  filter(sos_com_lvad == "Yes")
-
-rsdata_sens <- bind_rows(
-  prevlvad %>% mutate(org = 1),
-  rsdata %>% mutate(org = 2)
-) %>%
-  group_by(lopnr) %>%
-  arrange(org, shf_indexdtm) %>%
-  slice(n()) %>%
-  ungroup()
-flow <- flow %>%
-  add_row(
-    Criteria = "Sensitivity analyses - not excluding patients with previous LVAD",
-    N = nrow(rsdata_sens)
   )
 
 rm(rsdata422)

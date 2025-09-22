@@ -92,15 +92,11 @@ estfunc <- function(event, time, agesex = T, yearstart = 2003, yearvar = "indexy
     filter(shf_indexyear >= yearstart) %>%
     mutate(indexyear_use = droplevels(!!sym(yearvar)))
 
-  data2 <- rsdata_sens %>%
-    filter(shf_indexyear >= yearstart) %>%
-    mutate(indexyear_use = droplevels(!!sym(yearvar)))
-
   nyears <- nlevels(data %>% pull(indexyear_use)) + 1
   firstyears <- levels(data %>% pull(indexyear_use))[1]
 
   out0 <- estfunc_inner(data = data, event, time, namegroup = "All")
-  out10 <- estfunc_inner(data = data2, event, time, namegroup = "Sensitivity analysis including patients with previous LVAD")
+  out5 <- estfunc_inner(data = data %>% filter(advhftreat == "Yes"), event, time, namegroup = "Patients eligible for advanced HF therapy")
 
   if (agesex) {
     out1 <- estfunc_inner(data = data %>% filter(shf_age_cat == "<=70"), event, time, namegroup = "Age (years) <= 70")
@@ -108,14 +104,12 @@ estfunc <- function(event, time, agesex = T, yearstart = 2003, yearvar = "indexy
     out3 <- estfunc_inner(data = data %>% filter(shf_sex == "Female"), event, time, novars = "shf_sex", namegroup = "Female")
     out4 <- estfunc_inner(data = data %>% filter(shf_sex == "Male"), event, time, novars = "shf_sex", namegroup = "Male")
 
-    outall <- bind_rows(out0, out1, out2, out3, out4, out10)
+    outall <- bind_rows(out0, out1, out2, out3, out4, out5)
     rowspecs <- seq(nyears, nyears * 5, nyears)
   }
   if (!agesex) {
-    out5 <- estfunc_inner(data = data %>% filter(advhftreat == "Yes"), event, time, namegroup = "Patients eligible for advanced HF therapy")
-
-    outall <- bind_rows(out0, out5, out10)
-    rowspecs <- seq(nyears, nyears * 2, nyears)
+    outall <- bind_rows(out0, out5)
+    rowspecs <- seq(nyears, nyears * 1, nyears)
   }
 
   cl <- c("Patients", "Year", "N", "Events/sum py", "Crude", "Adjusted age, sex")
@@ -186,7 +180,7 @@ estfunc(event = outvars$var[i], time = outvars$time[i])
 
 i <- 4
 
-estfunc(event = outvars$var[i], time = outvars$time[i], agesex = F, yearstart = 2015)
+estfunc(event = outvars$var[i], time = outvars$time[i], agesex = F)
 ```
 
 ```{r}

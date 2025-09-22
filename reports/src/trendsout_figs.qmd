@@ -84,7 +84,11 @@ trendfunc <- function(data = rsdata, event, time, eventname, strata = NULL, adds
 #| cache.comments: false
 #| dependson: trendfunc
 #| fig-cap: "Temporal trends death"
-#| fig-subcap: !expr c("All", "Age", "Sex")
+#| fig-subcap:
+#| - All
+#| - Age
+#| - Sex
+#| - Patients eligible for advanced HF therapy
 #| layout-ncol: 2
 #| layout-nrow: 2
 
@@ -94,6 +98,7 @@ ybreaks <- seq(0, 100, 20)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks)
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 ```
 
 ```{r}
@@ -102,7 +107,11 @@ trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$sh
 #| cache.comments: false
 #| dependson: trendfunc
 #| fig-cap: "Temporal trends CV death"
-#| fig-subcap: !expr c("All", "Age", "Sex")
+#| fig-subcap:
+#| - All
+#| - Age
+#| - Sex
+#| - Patients eligible for advanced HF therapy
 #| layout-ncol: 2
 #| layout-nrow: 2
 
@@ -112,6 +121,7 @@ ybreaks <- seq(0, 100, 20)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks)
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 ```
 
 
@@ -121,7 +131,11 @@ trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$sh
 #| cache.comments: false
 #| dependson: trendfunc
 #| fig-cap: "Temporal trends Non-CV death"
-#| fig-subcap: !expr c("All", "Age", "Sex")
+#| fig-subcap:
+#| - All
+#| - Age
+#| - Sex
+#| - Patients eligible for advanced HF therapy
 #| layout-ncol: 2
 #| layout-nrow: 2
 
@@ -131,6 +145,7 @@ ybreaks <- seq(0, 40, 10)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
 trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks)
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 ```
 
 
@@ -140,18 +155,19 @@ trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$sh
 #| cache.comments: false
 #| dependson: trendfunc
 #| fig-cap: "Temporal trends LVAD"
-#| fig-subcap: !expr c("All", "Patients eligible for advanced HF therapy")
+#| fig-subcap:
+#| - All
+#| - Patients eligible for advanced HF therapy
 #| layout-ncol: 2
 #| layout-nrow: 2
 
 i <- 4
 ybreaks <- seq(0, 20, 5)
 
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearstart = 2015)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
 
 trendfunc(
-  data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks,
-  yearstart = 2015
+  data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks
 )
 ```
 
@@ -162,7 +178,9 @@ trendfunc(
 #| cache.comments: false
 #| dependson: trendfunc
 #| fig-cap: "Temporal trends Htx"
-#| fig-subcap: !expr c("All", "Patients eligible for advanced HF therapy")
+#| fig-subcap:
+#| - All
+#| - Patients eligible for advanced HF therapy
 #| layout-ncol: 2
 #| layout-nrow: 2
 

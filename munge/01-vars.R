@@ -41,8 +41,11 @@ tabvars <- c(
 
   # treatments
   "shf_rasiarni",
+  "shf_rasiarni_tg",
   "shf_bbl",
+  "shf_bbl_tg",
   "shf_mra",
+  "shf_mra_tg",
   "shf_sglt2",
   "shf_diuretic",
   "shf_nitrate",
@@ -89,11 +92,18 @@ metavars <- bind_rows(
   tibble(
     variable = c(
       "sos_com_htx",
-      "sos_com_lvad"
+      "sos_com_lvad",
+      "shf_rasiarni_tg",
+      "shf_bbl_tg",
+      "shf_mra_tg"
     ),
     label = c(
       "Previous heart transplant",
-      "Previous LVAD"
-    )
+      "Previous LVAD",
+      "Target dose ACEi/ARB/ARNi",
+      "Target dose Beta-blocker",
+      "Target dose MRA"
+    ),
+    unit = c("", "", rep("%", 3))
   )
 )

@@ -70,33 +70,3 @@ default_kable(proptab,
   col.names = cl
 )
 ```
-
-```{r}
-#| label: tbl-advhftreat-sens
-#| cache: true
-#| cache.comments: false
-#| tbl-cap: "Temporal trends eligible for AdvHF therapies - sensitivity analysis including patients with previous LVAD"
-#| tbl-pos: "H"
-
-proptab <- rsdata_sens %>%
-  group_by(indexyear_fac) %>%
-  count(advhftreat) %>%
-  mutate(
-    tot = sum(n),
-    p = n / tot * 100,
-    np = paste0(n, "/", tot, " (", fn(p, 0), "%)"),
-  ) %>%
-  ungroup() %>%
-  filter(advhftreat == "Yes") %>%
-  select(indexyear_fac, np)
-
-cl <- c("Year", "n/N (%)")
-
-if (output) {
-  make_one_xlsxsheet(proptab, colnames = cl)
-}
-
-default_kable(proptab,
-  col.names = cl
-)
-```

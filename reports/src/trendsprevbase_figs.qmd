@@ -87,7 +87,11 @@ trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, yb
 #| cache.comments: false
 #| dependson: trendbasefunc
 #| fig-cap: "Temporal trends in baseline characteristics"
-#| fig-subcap: !expr c("Age", "Sex", "CCI", "GDMT")
+#| fig-subcap:
+#|  - Age
+#|  - Sex
+#|  - CCI
+#|  - GDMT
 #| layout-ncol: 2
 #| layout-nrow: 3
 
@@ -103,7 +107,10 @@ trendbasefunc(gdmt = T)
 #| cache.comments: false
 #| dependson: trendbasefunc
 #| fig-cap: "Temporal trends in baseline characteristics for patients eligible for AdvHF therapies"
-#| fig-subcap: !expr c("Sex", "CCI", "GDMT")
+#| fig-subcap:
+#|  - Sex
+#|  - CCI
+#|  - GDMT
 #| layout-ncol: 2
 #| layout-nrow: 3
 
