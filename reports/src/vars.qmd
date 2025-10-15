@@ -110,7 +110,7 @@ vars <- vars %>%
   select(Variable, datasource)
 
 footnotetext <- c(
-  "Derived from diagnoses/operations in all positions, in-patient and out-patient speciality care within 5 years prior to index (ICD-10)/1987 (ICD-9) unless stated otherwise.",
+  "Derived from diagnoses/operations in all positions, in-patient and out-patient speciality care within 5 years (3 years for malignant cancer) prior to index (for ICD-10) or 1987 (for ICD-9).",
   "From the year preceeding baseline.",
   "Derived from operations in all positions, in-patient and out-patient speciality.",
   "Cause of death is derived from the underlying cause of death.",
@@ -136,13 +136,11 @@ if (output) {
   )
 }
 
-
 vars <- vars %>%
   mutate(
     # so no probs
     Variable = sanitize_text(Variable)
   )
-
 
 default_kable(vars,
   escape = FALSE,

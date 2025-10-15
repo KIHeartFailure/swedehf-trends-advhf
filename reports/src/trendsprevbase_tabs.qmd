@@ -14,7 +14,7 @@ trendbasetabfunc_inner <- function(data = data, strata, strataname = "", val = "
       np = paste0(n, "/", tot, " (", fn(p, 0), "%)"),
       np = case_when(
         n == 0 ~ "-",
-        n < 10 ~ "<10",
+        tot < 10 ~ "<10",
         TRUE ~ np
       ),
       pats = paste(strataname, !!sym(strata)),

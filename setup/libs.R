@@ -23,7 +23,6 @@ library(tableone)
 # outcomes
 library(survival)
 library(epitools)
-library(survminer) # check assumptions
 library(splines)
 library(stdReg)
 library(Rcan)
@@ -33,10 +32,3 @@ library(ggplot2)
 library(ggrepel)
 library(patchwork)
 library(scales)
-
-# imputation
-library(mice)
-library(miceadds)
-library(parallel)
-library(doParallel)
-library(foreach)

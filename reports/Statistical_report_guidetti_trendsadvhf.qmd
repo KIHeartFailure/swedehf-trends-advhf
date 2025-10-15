@@ -1,6 +1,5 @@
 ---
 title: "Statistical report: Trends in prevalence and in mortality of patients with advanced heart failure with reduced EF in Sweden between 2003 and 2022"
-subtitle: DRAFT
 date: "`r Sys.Date()`"
 cover: static/ki_logo_vert_rgb.png
 editor: source
@@ -78,6 +77,10 @@ Swedish personal identity number (PIN)[@pin]:
 
 {{< include src/vars.qmd >}}
 
+More information on data sources, definitions etc. are found https://kiheartfailure.github.io/shfdb4/.
+
+### Target doses
+
 ```{r}
 #| label: tbl-targetdoses
 #| tbl-cap: Target doses
@@ -141,7 +144,9 @@ default_kable(targetdoses,
 )
 ```
 
-More information on data sources, definitions etc. are found https://kiheartfailure.github.io/shfdb4/.
+### Patients eligible for AdvHF therapies
+
+Patients eligible for AdvHF therapies are defined as patients $\le$ 70 years with no previous dialysis within 5 years or cancer within 3 years.
 
 ## Inclusion/exclusion criteria
 

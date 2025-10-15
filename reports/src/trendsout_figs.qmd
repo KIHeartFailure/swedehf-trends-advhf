@@ -3,9 +3,8 @@
 #| cache: true
 #| cache.comments: false
 
-trendfunc <- function(data = rsdata, event, time, eventname, strata = NULL, addstrataname = NULL, ybreaks = NULL, yearstart = 2003, yearvar = "indexyear_fac") {
+trendfunc <- function(data = rsdata, event, time, eventname, strata = NULL, addstrataname = NULL, ybreaks = NULL, yearvar = "indexyear_fac") {
   r <- data %>%
-    filter(shf_indexyear >= yearstart) %>%
     mutate(!!sym(yearvar) := droplevels(!!sym(yearvar))) %>%
     group_by(!!sym(strata), !!sym(yearvar)) %>%
     summarise(
@@ -16,54 +15,74 @@ trendfunc <- function(data = rsdata, event, time, eventname, strata = NULL, adds
     rename(level = !!sym(strata)) %>%
     mutate(
       rate = ev / s * 100,
+      rateprint = fn(rate, 0),
       level = paste0(addstrataname, level),
       level = str_replace_all(level, ">=", "\u2265"),
       level = str_replace_all(level, "<=", "\u2264"),
       level = fct_inorder(level)
     )
+  levs <- levels(data %>% pull(!!sym(yearvar)))
 
   if (strata == "all") {
     p <- r %>% ggplot(
       aes(x = !!sym(yearvar), y = rate, group = 1)
     ) +
-      geom_line(linewidth = 1, colour = global_cols[1]) +
-      geom_point(size = 2, colour = global_cols[1]) +
+      geom_line(linewidth = 1.5, colour = global_cols[1]) +
+      geom_point(size = 3.5, colour = global_cols[1]) +
       scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
       theme_classic() +
       theme(
-        panel.grid.major = element_line(
+        panel.grid.major.y = element_line(
           color = "lightgrey",
           linewidth = 0.5,
           linetype = 2
         ),
-        text = element_text(size = 15, face = "bold"),
+        text = element_text(size = 19, face = "bold"),
         axis.text = element_text(color = "black")
       ) +
-      labs(x = "Year", y = paste0(eventname, " / 100 person-years"))
+      labs(x = "Year", y = paste0(eventname, " / 100 person-years")) +
+      geom_text(
+        data = r %>% filter(!!sym(yearvar) %in% c(first(levs), last(levs))), # Filter data first
+        aes(label = rateprint),
+        nudge_y = max(ybreaks) * 0.05,
+        size = 5.5,
+        color = global_cols[1],
+        fontface = "bold"
+      )
   }
 
   if (strata != "all") {
     p <- r %>% ggplot(
       aes(x = !!sym(yearvar), y = rate, group = level)
     ) +
-      geom_line(linewidth = 1, aes(color = level), show.legend = T) +
-      geom_point(aes(col = level), size = 2, show.legend = T) +
+      geom_line(linewidth = 1.5, aes(color = level), show.legend = T) +
+      geom_point(aes(col = level, shape = level, size = level), show.legend = T) +
       scale_color_manual(values = c(global_cols[1:2])) +
+      scale_shape_manual(values = c(global_shapes[1:2])) +
+      scale_size_manual(values = c(global_size[1:2])) +
       scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
       theme_classic() +
       theme(
-        panel.grid.major = element_line(
+        panel.grid.major.y = element_line(
           color = "lightgrey",
           linewidth = 0.5,
           linetype = 2
         ),
-        text = element_text(size = 15, face = "bold"),
+        text = element_text(size = 19, face = "bold"),
         axis.text = element_text(color = "black"),
         legend.position = "bottom",
         legend.title = element_blank(),
         legend.text = element_text(size = 20, face = "bold")
       ) +
-      labs(x = "Year", y = paste0(eventname, " / 100 person-years"))
+      labs(x = "Year", y = paste0(eventname, " / 100 person-years")) +
+      geom_text(
+        data = r %>% filter(!!sym(yearvar) %in% c(first(levs), last(levs))), # Filter data first
+        aes(label = rateprint),
+        nudge_y = max(ybreaks) * 0.05,
+        size = 5.5,
+        color = rep(global_cols[1:2], each = 2),
+        fontface = "bold"
+      )
   }
 
   if (!is.null(ybreaks)) {
@@ -140,12 +159,12 @@ trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i],
 #| layout-nrow: 2
 
 i <- 3
-ybreaks <- seq(0, 40, 10)
+ybreaks <- seq(0, 20, 5)
 
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks)
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks)
-trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_age_cat", addstrataname = "Age (years) ", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "shf_sex", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
 ```
 
 
@@ -162,12 +181,12 @@ trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i],
 #| layout-nrow: 2
 
 i <- 4
-ybreaks <- seq(0, 20, 5)
+ybreaks <- seq(0, 10, 2)
 
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
 
 trendfunc(
-  data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks
+  data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac"
 )
 ```
 
@@ -185,8 +204,8 @@ trendfunc(
 #| layout-nrow: 2
 
 i <- 5
-ybreaks <- seq(0, 20, 5)
+ybreaks <- seq(0, 10, 2)
 
-trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
-trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks)
+trendfunc(event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
+trendfunc(data = rsdata %>% filter(advhftreat == "Yes"), event = outvars$var[i], time = outvars$time[i], eventname = outvars$shortname[i], strata = "all", ybreaks = ybreaks, yearvar = "indexyear_cat_fac")
 ```

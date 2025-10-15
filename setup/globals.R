@@ -12,6 +12,8 @@ datadate <- "20240423"
 global_z05 <- qnorm(1 - 0.025)
 
 global_cols <- RColorBrewer::brewer.pal(7, "Dark2")
+global_shapes <- c(19, 15, 18, 17)
+global_size <- c(3.5, 3.5, 5)
 
 global_fu <- 365
 

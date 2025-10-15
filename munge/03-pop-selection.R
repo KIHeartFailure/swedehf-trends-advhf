@@ -82,7 +82,7 @@ rsdata <- rsdata %>%
   filter(sos_timeprevhosphf <= 365 / 2 & !is.na(sos_timeprevhosphf) | sos_location == "HF in-patient")
 flow <- flow %>%
   add_row(
-    Criteria = "Include posts with >= previous HFH < 6 months",
+    Criteria = "Include posts with >= 1 previous HFH < 6 months",
     N = nrow(rsdata)
   )
 
@@ -90,7 +90,7 @@ rsdata <- rsdata %>%
   filter(sos_com_htx == "No")
 flow <- flow %>%
   add_row(
-    Criteria = "Exclude previous Htx",
+    Criteria = "Exclude posts with a previous Htx",
     N = nrow(rsdata)
   )
 
@@ -98,7 +98,7 @@ rsdata <- rsdata %>%
   filter(sos_com_lvad == "No")
 flow <- flow %>%
   add_row(
-    Criteria = "Exclude previous LVAD",
+    Criteria = "Exclude posts with a previous LVAD",
     N = nrow(rsdata)
   )
 

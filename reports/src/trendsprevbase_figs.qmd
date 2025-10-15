@@ -11,11 +11,12 @@ trendbasegdmtfunc <- function(data, med, medname) {
     mutate(
       tot = sum(n),
       p = n / tot * 100,
+      pprint = fn(p, 0),
       level = medname
     ) %>%
     ungroup() %>%
     filter(!!sym(med) == "Yes") %>%
-    select(indexyear_fac, p, level)
+    select(indexyear_fac, p, pprint, level)
 }
 
 trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, ybreaks = seq(0, 100, 20), gdmt = F) {
@@ -27,7 +28,8 @@ trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, yb
       count(!!sym(strata)) %>%
       mutate(
         tot = sum(n),
-        p = n / tot * 100
+        p = n / tot * 100,
+        pprint = fn(p, 0)
       ) %>%
       ungroup() %>%
       rename(level = !!sym(strata)) %>%
@@ -36,7 +38,9 @@ trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, yb
         level = str_replace_all(level, ">=", "\u2265"),
         level = str_replace_all(level, "<=", "\u2264"),
         level = fct_inorder(level)
-      )
+      ) %>%
+      arrange(level, indexyear_fac)
+    nudgemy <- 5
   }
 
   if (gdmt) {
@@ -47,23 +51,26 @@ trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, yb
 
     prop <- bind_rows(rasi, bbl, mra) %>%
       mutate(level = fct_inorder(level))
+    nudgemy <- -5
   }
 
   p <- prop %>% ggplot(
     aes(x = indexyear_fac, y = p, group = level)
   ) +
-    geom_line(linewidth = 1, aes(color = level), show.legend = T) +
-    geom_point(aes(col = level), size = 2, show.legend = T) +
+    geom_line(linewidth = 1.5, aes(color = level), show.legend = T) +
+    geom_point(aes(col = level, shape = level, size = level), show.legend = T) +
     scale_color_manual(values = c(global_cols[1:nlevel])) +
+    scale_shape_manual(values = c(global_shapes[1:nlevel])) +
+    scale_size_manual(values = c(global_size[1:nlevel])) +
     scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
     theme_classic() +
     theme(
-      panel.grid.major = element_line(
+      panel.grid.major.y = element_line(
         color = "lightgrey",
         linewidth = 0.5,
         linetype = 2
       ),
-      text = element_text(size = 15, face = "bold"),
+      text = element_text(size = 19, face = "bold"),
       axis.text = element_text(color = "black"),
       legend.position = "bottom",
       legend.title = element_blank(),
@@ -72,6 +79,15 @@ trendbasefunc <- function(data = rsdata, strata = NULL, addstrataname = NULL, yb
     labs(x = "Year", y = "%") +
     scale_y_continuous(
       limits = c(min(ybreaks), max(ybreaks)), breaks = ybreaks # , expand = c(0, 0)
+    ) +
+    geom_text(
+      data = prop %>% filter(indexyear_fac %in% c("2003", "2022")), # Filter data first
+      aes(label = pprint),
+      nudge_y = nudgemy,
+      size = 5.5,
+      color = rep(global_cols[1:nlevel], each = 2),
+      fontface = "bold",
+      check_overlap = F
     )
 
   if (output) {

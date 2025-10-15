@@ -223,11 +223,11 @@ tab <- left_join(tab,
 # footnotes
 tab <- tab %>%
   mutate(
-    footnote1 = if_else(!is.na(var) & var %in% c("shf_potassium_cat", "shf_potassium"), footnote_marker_alphabet(1, format = "latex"), ""),
-    footnote2 = if_else(!is.na(var) & var %in% c("shf_sglt2"), footnote_marker_alphabet(2, format = "latex"), ""),
-    footnote3 = if_else(!is.na(var) & str_detect(var, "_tg"), footnote_marker_alphabet(3, format = "latex"), ""),
-    footnote4 = if_else(!is.na(var) & var %in% c("shf_mra_tg"), footnote_marker_alphabet(4, format = "latex"), ""),
-    footnote5 = if_else(!is.na(var) & var %in% c("shf_rasiarni_tg"), footnote_marker_alphabet(5, format = "latex"), ""),
+    footnote1 = if_else(!is.na(var) & str_detect(var, "_tg"), footnote_marker_alphabet(1, format = "latex"), ""),
+    footnote2 = if_else(!is.na(var) & var %in% c("shf_rasiarni_tg"), footnote_marker_alphabet(2, format = "latex"), ""),
+    footnote3 = if_else(!is.na(var) & var %in% c("shf_mra_tg"), footnote_marker_alphabet(3, format = "latex"), ""),
+    footnote4 = if_else(!is.na(var) & var %in% c("shf_sglt2"), footnote_marker_alphabet(4, format = "latex"), ""),
+    footnote5 = if_else(!is.na(var) & var %in% c("shf_potassium_cat", "shf_potassium"), footnote_marker_alphabet(5, format = "latex"), "")
   ) %>%
   unite(footnote, starts_with("footnote"), sep = "")
 
@@ -235,11 +235,11 @@ cn <- c("Variable", "Missing (%)", "Overall", levels(rsdata %>% pull(advhftreat)
 cn <- str_remove(cn, "Yes ")
 
 footnotetext <- c(
-  "Included in the CRF 2006.",
-  "Included in the CRF April 2021.",
   "% missing is for patients with the respective medication.",
+  "If a patient has multiple ACEi/ARB/ARNi the highest target dose is selected.",
   "Included in the CRF October 2013.",
-  "If a patient has multiple ACEi/ARB/ARNi the highest target dose is selected."
+  "Included in the CRF April 2021.",
+  "Included in the CRF 2006."
 )
 
 # excel

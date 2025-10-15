@@ -38,8 +38,8 @@ rsdata <- left_join(rsdata %>% mutate(shf_arnidose = as.character(shf_arnidose))
       case_when(
         is.na(shf_arni) | shf_arni == "No" ~ 2,
         is.na(targetdosearni) ~ NA_real_,
-        targetdosearni %in% c("0", "<50") ~ 0,
-        targetdosearni %in% c("100", "50", "50-99") ~ 1
+        targetdosearni %in% c("<50") ~ 0,
+        targetdosearni %in% c(">=50") ~ 1
       ),
       levels = 0:2, labels = c("<50", ">=50", "No/missing medication")
     )
@@ -72,18 +72,18 @@ rsdata <- rsdata %>%
     ),
     all = factor(1),
     indexyear_fac = factor(shf_indexyear),
-    #      indexyear_cat_fac = factor(case_when(
-    #        shf_indexyear <= 2004 ~ "2003-2004",
-    #        shf_indexyear <= 2006 ~ "2005-2006",
-    #        shf_indexyear <= 2008 ~ "2007-2008",
-    #        shf_indexyear <= 2010 ~ "2009-2010",
-    #        shf_indexyear <= 2012 ~ "2011-2012",
-    #        shf_indexyear <= 2014 ~ "2013-2014",
-    #        shf_indexyear <= 2016 ~ "2015-2016",
-    #        shf_indexyear <= 2018 ~ "2017-2018",
-    #        shf_indexyear <= 2020 ~ "2019-2020",
-    #        shf_indexyear <= 2022 ~ "2021-2022"
-    #      )),
+    indexyear_cat_fac = factor(case_when(
+      shf_indexyear <= 2004 ~ "2003-2004",
+      shf_indexyear <= 2006 ~ "2005-2006",
+      shf_indexyear <= 2008 ~ "2007-2008",
+      shf_indexyear <= 2010 ~ "2009-2010",
+      shf_indexyear <= 2012 ~ "2011-2012",
+      shf_indexyear <= 2014 ~ "2013-2014",
+      shf_indexyear <= 2016 ~ "2015-2016",
+      shf_indexyear <= 2018 ~ "2017-2018",
+      shf_indexyear <= 2020 ~ "2019-2020",
+      shf_indexyear <= 2022 ~ "2021-2022"
+    )),
     advhftreat = ynfac(
       if_else(shf_age <= 70 &
         sos_com_dialysis == "No" &
