@@ -62,6 +62,21 @@ flow <- flow %>%
     N = nrow(rsdata)
   )
 
+rsdataadvhf <- rsdata %>%
+  mutate(advhf = factor(case_when(
+    shf_ef %in% c("<30") &
+      shf_nyha %in% c("III", "IV") &
+      (sos_timeprevhosphf <= 365 / 2 & !is.na(sos_timeprevhosphf) | sos_location == "HF in-patient") &
+      sos_com_htx == "No" & sos_com_lvad == "No" ~ 1,
+    TRUE ~ 0
+  ), levels = 0:1, labels = c("No", "Yes")))
+
+flow <- flow %>%
+  add_row(
+    Criteria = "Denominator in calculation of % of patients with advanced HF",
+    N = nrow(rsdata)
+  )
+
 rsdata <- rsdata %>%
   filter(shf_ef %in% c("<30"))
 flow <- flow %>%

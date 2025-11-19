@@ -156,7 +156,7 @@ Patients eligible for AdvHF therapies are defined as patients $\le$ 70 years wit
 #| tbl-pos: "H"
 
 default_kable(flow) %>%
-  row_spec(c(1, 11), bold = T)
+  row_spec(c(1, 11, 17), bold = T)
 ```
 
 First patient in: `r min(rsdata$shf_indexdtm)` and last patient in: `r max(rsdata$shf_indexdtm)` 
@@ -166,8 +166,8 @@ Baseline is date of visits or date of discharge for the visit/hospitalization re
 
 ## Acknowledgments
 
-Please include "We thank all staff members at care units reporting into the SwedeHF registry for their contribution." 
-in the Acknowledgements of any resulting articles. 
+Include: "We thank all staff members at care units reporting into the SwedeHF registry for their contribution and the Swedish Heart Lung Foundation for financial support to the quality registers included in SWEDEHEART." in the Acknowledgements of any resulting articles. 
+
 
 ## Ethics and Informed consent
 

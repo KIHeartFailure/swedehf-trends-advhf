@@ -53,7 +53,7 @@ tabvars <- c(
   "shf_anticoagulantia",
   "shf_asaantiplatelet",
   "shf_statin",
-  "shf_device_cat",
+  "shf_device",
   # "sos_com_lvad",
   # "sos_com_htx",
 

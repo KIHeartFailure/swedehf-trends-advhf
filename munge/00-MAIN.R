@@ -25,6 +25,7 @@ save(
   file = here("data/clean-data/rsdata.RData"),
   list = c(
     "rsdata",
+    "rsdataadvhf",
     "flow",
     "tabvars",
     "outvars",
