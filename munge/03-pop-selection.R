@@ -71,10 +71,16 @@ rsdataadvhf <- rsdata %>%
     TRUE ~ 0
   ), levels = 0:1, labels = c("No", "Yes")))
 
+rsdataadvhf <- rsdataadvhf %>%
+  group_by(lopnr) %>%
+  arrange(shf_indexdtm) %>%
+  slice(n()) %>%
+  ungroup()
+
 flow <- flow %>%
   add_row(
     Criteria = "Denominator in calculation of % of patients with advanced HF",
-    N = nrow(rsdata)
+    N = nrow(rsdataadvhf)
   )
 
 rsdata <- rsdata %>%
