@@ -10,6 +10,10 @@ hush <- function(code) {
   return(tmp)
 }
 
+# hush <- function(code) {
+#  tmp <- code
+#  return(tmp)
+# }
 estfunc_inner2 <- function(model, datain) {
   std_fit <- stdGlm(model, data = transform(datain, time = 36525), X = "indexyear_use")
   std_sum <- summary(std_fit, CI.type = "log")
@@ -76,7 +80,7 @@ estfunc_inner <- function(data, event, time, novars = NULL, namegroup) {
 
   # age sex
   adjvars <- setdiff(c("shf_age", "shf_sex"), novars)
-  poisson_fit <- glm(formula(paste0("event == 'Yes' ~ indexyear_use +", adjvars)),
+  poisson_fit <- glm(formula(paste0("event == 'Yes' ~ indexyear_use +", paste(adjvars, collapse = " + "))),
     offset = log(time / 365.25 / 100),
     data = data, family = "poisson"
   )
